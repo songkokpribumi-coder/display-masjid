@@ -362,7 +362,7 @@
         <div class="prayer-check-row" id="imamPrayerChecks"></div>
 
         <span class="field-label" style="margin-top:20px;">URL Sinkronisasi (Google Apps Script)</span>
-        <p class="sub" style="margin:-2px 0 8px;">Isi ini kalau imam akan melapor dari HP-nya sendiri (perangkat berbeda dari TV). Kosongkan kalau laporan cukup dilakukan langsung di TV.</p>
+        <p class="sub" style="margin:-2px 0 8px;">Isi URL ini agar <strong>semua pengaturan</strong> (jadwal, banner/video, pengumuman, identitas, dll) otomatis tersinkron ke semua perangkat yang menjalankan aplikasi ini — bukan cuma laporan imam. Kosongkan kalau aplikasi hanya dijalankan di satu perangkat saja.</p>
         <input type="text" id="imamSyncUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
         <p class="hint" id="imamSyncTestResult"></p>
 
@@ -887,6 +887,7 @@
     try{
       await storeSet('mosque_ticker_v1', JSON.stringify(ticker));
       await storeSet('mosque_banners_v1', JSON.stringify(bannersCfg));
+      remotePush('ticker', ticker); remotePush('banners', bannersCfg);
       renderTickerAndBannersUI(); initBannerEngine();
       $('annStatus').textContent = 'Tersimpan. Banner & teks langsung berlaku di layar.';
       $('annStatus').className = 'status-msg ok';
@@ -947,6 +948,7 @@
     document.querySelectorAll('.imam-prayer-cb').forEach(cb=> prayers[cb.dataset.key] = cb.checked);
     imamCfg = { enabled: $('imamEnabled').checked, prayers, syncUrl: $('imamSyncUrl').value.trim() };
     await storeSet('mosque_imam_cfg_v1', JSON.stringify(imamCfg));
+    remotePush('imamCfg', imamCfg);
     renderImamUI();
     $('imamStatus').textContent = 'Pengaturan imam tersimpan.';
     $('imamStatus').className = 'status-msg ok';
@@ -985,6 +987,7 @@
       blackoutMinutes: Math.max(1, Number($('paBlackout').value)||10),
     };
     await storeSet('mosque_prayer_auto_v1', JSON.stringify(prayerAuto));
+    remotePush('prayerAuto', prayerAuto);
     $('paStatus').textContent = 'Pengaturan adzan tersimpan.';
     $('paStatus').className = 'status-msg ok';
   });
@@ -1031,11 +1034,58 @@
       remotePost(url, { iso, prayerKey:key, action: absent ? 'set' : 'clear' });
     }
   }
-  async function pollRemoteReports(){
+  async function remotePush(key, value){
     const url = effectiveSyncUrl();
     if(!url) return;
-    const data = await remoteGet(url);
-    if(data) remoteReportsCache = data;
+    remotePost(url, { key, value });
+  }
+
+  async function pollFullSync(){
+    const url = effectiveSyncUrl();
+    if(!url) return;
+    const remote = await remoteGet(url);
+    if(!remote) return;
+
+    if(remote.reports) remoteReportsCache = remote.reports;
+
+    if(remote.schedule && JSON.stringify(remote.schedule)!==JSON.stringify(schedule)){
+      schedule = remote.schedule;
+      await storeSet('mosque_schedule_v1', JSON.stringify(schedule));
+      refreshScheduleTabInfo(); tick();
+    }
+    if(remote.ticker && JSON.stringify(remote.ticker)!==JSON.stringify(ticker)){
+      ticker = remote.ticker;
+      await storeSet('mosque_ticker_v1', JSON.stringify(ticker));
+      renderTickerAndBannersUI();
+    }
+    if(remote.banners && JSON.stringify(remote.banners)!==JSON.stringify(bannersCfg)){
+      bannersCfg = remote.banners;
+      await storeSet('mosque_banners_v1', JSON.stringify(bannersCfg));
+      renderTickerAndBannersUI(); initBannerEngine();
+    }
+    if(remote.identity && JSON.stringify(remote.identity)!==JSON.stringify(identity)){
+      identity = remote.identity;
+      await storeSet('mosque_identity_v1', JSON.stringify(identity));
+      renderIdentity();
+    }
+    if(remote.prayerAuto && JSON.stringify(remote.prayerAuto)!==JSON.stringify(prayerAuto)){
+      prayerAuto = remote.prayerAuto;
+      await storeSet('mosque_prayer_auto_v1', JSON.stringify(prayerAuto));
+      renderPaUI();
+    }
+    if(remote.imamCfg && JSON.stringify(remote.imamCfg)!==JSON.stringify(imamCfg)){
+      imamCfg = remote.imamCfg;
+      await storeSet('mosque_imam_cfg_v1', JSON.stringify(imamCfg));
+      renderImamUI();
+    }
+    if(remote.soundCfg){
+      const merged = {...DEFAULT_SOUND, ...remote.soundCfg};
+      if(JSON.stringify(merged)!==JSON.stringify(soundCfg)){
+        soundCfg = merged;
+        await storeSet('mosque_sound_cfg_v1', JSON.stringify(soundCfg));
+        renderSoundUI();
+      }
+    }
   }
 
   // ---- "Lapor Imam Berhalangan" floating button + modal (same on every device running this app) ----
@@ -1166,6 +1216,7 @@
       iqomahBeep: $('soundIqomahBeep').checked
     };
     await storeSet('mosque_sound_cfg_v1', JSON.stringify(soundCfg));
+    remotePush('soundCfg', soundCfg);
     renderSoundUI();
     $('soundStatus').textContent = 'Pengaturan suara tersimpan.';
     $('soundStatus').className = 'status-msg ok';
@@ -1386,6 +1437,7 @@
     if(!parsedUpload) return;
     schedule = parsedUpload;
     await storeSet('mosque_schedule_v1', JSON.stringify(schedule));
+    remotePush('schedule', schedule);
     refreshScheduleTabInfo(); tick();
     $('scheduleStatus').textContent = 'Jadwal tersimpan dan langsung tampil di layar.';
     $('scheduleStatus').className = 'status-msg ok';
@@ -1408,6 +1460,7 @@
   $('saveIdBtn').addEventListener('click', async ()=>{
     identity = { name: $('mosqueNameInput').value.trim() || 'Masjid', loc: $('mosqueLocInput').value.trim(), logo: identity.logo || '' };
     await storeSet('mosque_identity_v1', JSON.stringify(identity));
+    remotePush('identity', identity);
     renderIdentity(); $('idStatus').textContent = 'Identitas tersimpan.'; $('idStatus').className = 'status-msg ok';
   });
   $('logoInput').addEventListener('change', (e)=>{
@@ -1460,6 +1513,6 @@
     reader.readAsText(file); e.target.value = '';
   });
 
-  loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollRemoteReports(); setInterval(pollRemoteReports, 5000); });
+  loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollFullSync(); setInterval(pollFullSync, 12000); });
 })();
 </script>

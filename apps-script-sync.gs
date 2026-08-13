@@ -1,39 +1,68 @@
 /**
- * Backend sinkronisasi sederhana untuk fitur "Konfirmasi Kehadiran Imam"
- * pada aplikasi Jadwal Sholat Masjid.
+ * Backend sinkronisasi untuk aplikasi Jadwal Sholat Masjid.
+ * Menyimpan SEMUA pengaturan (jadwal, banner/video, pengumuman, identitas,
+ * pengaturan adzan/iqomah/suara, dan laporan "imam berhalangan") dalam satu
+ * file JSON di Google Drive akun Anda, supaya semua perangkat yang
+ * menjalankan aplikasi ini (TV, HP imam, dll) selalu menampilkan data yang
+ * sama.
  *
- * CARA PASANG:
- * 1. Buka https://script.google.com -> New project.
+ * CARA PASANG / PASANG ULANG:
+ * 1. Buka https://script.google.com -> New project (atau buka project lama).
  * 2. Hapus semua isi editor, tempel seluruh isi file ini.
- * 3. Klik "Deploy" -> "New deployment".
- * 4. Pilih tipe "Web app".
+ * 3. Klik "Deploy" -> "New deployment" (WAJIB "New deployment", bukan edit
+ *    yang lama, karena script ini butuh izin akses Google Drive yang
+ *    berbeda dari versi sebelumnya).
+ *    - Type: Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 5. Klik "Deploy", izinkan aksesnya, lalu salin "Web app URL" yang muncul
- *    (bentuknya seperti https://script.google.com/macros/s/xxxxx/exec).
- * 6. Tempel URL itu ke Pengaturan -> tab "Adzan & Iqomah" -> "URL Sinkronisasi".
- *
- * Setiap kali Anda mengubah kode ini, buat "New deployment" lagi (bukan edit
- * deployment lama) supaya perubahan benar-benar aktif.
+ * 4. Saat pertama kali deploy, Google akan minta izin akses Drive -> klik
+ *    "Allow"/"Izinkan". Ini wajar dan aman, izin itu hanya dipakai untuk
+ *    membuat 1 file kecil bernama "mosque-app-state.json" di Drive Anda.
+ * 5. Salin "Web app URL" yang muncul, tempel ke Pengaturan aplikasi -> tab
+ *    "Adzan & Iqomah" -> "URL Sinkronisasi" -> Simpan.
  */
 
+var FILE_NAME = 'mosque-app-state.json';
+
+function getStateFile_() {
+  var files = DriveApp.getFilesByName(FILE_NAME);
+  if (files.hasNext()) return files.next();
+  return DriveApp.createFile(FILE_NAME, '{}', MimeType.PLAIN_TEXT);
+}
+
+function readState_() {
+  var file = getStateFile_();
+  try {
+    return JSON.parse(file.getBlob().getDataAsString() || '{}');
+  } catch (err) {
+    return {};
+  }
+}
+
 function doGet(e) {
-  var props = PropertiesService.getScriptProperties();
-  var state = props.getProperty('STATE') || '{"request":null,"confirm":null}';
-  return ContentService.createTextOutput(state).setMimeType(ContentService.MimeType.JSON);
+  var state = readState_();
+  return ContentService.createTextOutput(JSON.stringify(state)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var props = PropertiesService.getScriptProperties();
-  var state = JSON.parse(props.getProperty('STATE') || '{"request":null,"confirm":null}');
+  var file = getStateFile_();
+  var state = readState_();
   var body = JSON.parse(e.postData.contents);
 
-  if (body.type === 'request') {
-    state.request = body.request; // null, atau {iso, prayerKey, label, deadlineEpoch}
-  } else if (body.type === 'confirm') {
-    state.confirm = { iso: body.iso, prayerKey: body.prayerKey, status: body.status, at: Date.now() };
+  if (typeof body.key !== 'undefined') {
+    // General settings update, e.g. { key: "schedule", value: {...} }
+    state[body.key] = body.value;
+  } else if (body.iso && body.prayerKey) {
+    // "Imam berhalangan" report, e.g. { iso, prayerKey, action: "set"|"clear" }
+    if (!state.reports) state.reports = {};
+    var key = body.iso + '#' + body.prayerKey;
+    if (body.action === 'clear') {
+      delete state.reports[key];
+    } else {
+      state.reports[key] = { status: 'absen', at: Date.now() };
+    }
   }
 
-  props.setProperty('STATE', JSON.stringify(state));
+  file.setContent(JSON.stringify(state));
   return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
 }
