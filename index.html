@@ -69,13 +69,7 @@
   .pa-title{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(30px,5vw,64px); color:var(--brass-bright); }
   .pa-sub{ font-family:'Inter',sans-serif; font-size:clamp(14px,1.6vw,22px); color:var(--muted); margin-top:10px; }
   .pa-countdown{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:clamp(64px,11vw,150px); color:var(--parchment); margin-top:14px; }
-  .pa-fullscreen.blackout .pa-icon,.pa-fullscreen.blackout .pa-title,.pa-fullscreen.blackout .pa-sub,.pa-fullscreen.blackout .pa-countdown,.pa-fullscreen.blackout .pa-imam-buttons{ display:none; }
-  .pa-imam-buttons{ display:flex; gap:18px; margin-top:26px; }
-  .pa-imam-btn{ font-family:'Inter',sans-serif; font-weight:700; font-size:clamp(15px,1.4vw,20px); padding:16px 28px; border-radius:14px; cursor:pointer; border:2px solid; }
-  .pa-imam-btn.hadir{ background:rgba(127,194,155,0.15); border-color:#7FC29B; color:#7FC29B; }
-  .pa-imam-btn.hadir:hover{ background:#7FC29B; color:var(--ink); }
-  .pa-imam-btn.absen{ background:rgba(193,80,58,0.15); border-color:var(--danger); color:#E8846F; }
-  .pa-imam-btn.absen:hover{ background:var(--danger); color:var(--parchment); }
+  .pa-fullscreen.blackout .pa-icon,.pa-fullscreen.blackout .pa-title,.pa-fullscreen.blackout .pa-sub,.pa-fullscreen.blackout .pa-countdown{ display:none; }
   .pa-fullscreen.imam-absent .pa-title{ color:var(--danger); }
 
   .gear-btn{ position:fixed; left:14px; bottom:14px; z-index:60; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:rgba(15,49,41,0.7); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:.18; transition:opacity .2s ease, transform .2s ease; }
@@ -85,25 +79,13 @@
   .install-btn{ position:fixed; right:14px; bottom:14px; z-index:60; border:1px solid var(--brass); background:var(--panel-2); color:var(--brass-bright); font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; padding:9px 14px; border-radius:20px; cursor:pointer; opacity:.55; transition:opacity .2s ease; }
   .install-btn:hover{ opacity:1; }
 
-  /* ---------- Dedicated imam confirmation page (?imam=1) ---------- */
-  .imam-view{ position:fixed; inset:0; z-index:100; background:var(--ink); display:flex; align-items:center; justify-content:center; padding:24px; }
-  .imam-card{ width:100%; max-width:420px; text-align:center; }
-  .imam-logo{ width:84px; height:84px; border-radius:50%; object-fit:cover; border:2px solid var(--brass); background:#fff; margin:0 auto 14px; display:block; }
-  .imam-card h1{ font-family:'Fraunces',serif; font-size:26px; margin:0; color:var(--parchment); }
-  .imam-role{ color:var(--brass-bright); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; margin:6px 0 30px; }
-  .imam-status{ margin-bottom:26px; }
-  .imam-idle-icon,.imam-active-icon{ font-size:56px; margin-bottom:14px; }
-  .imam-status p{ color:var(--parchment); font-size:16px; margin:6px 0; }
-  .imam-prayer-label{ font-family:'Fraunces',serif; font-size:24px !important; color:var(--brass-bright) !important; font-weight:600; }
-  .imam-hint{ color:var(--muted) !important; font-size:13px !important; }
-  .imam-buttons{ display:flex; flex-direction:column; gap:12px; margin-top:22px; }
-  .imam-big-btn{ font-family:'Inter',sans-serif; font-weight:700; font-size:18px; padding:18px; border-radius:14px; cursor:pointer; border:2px solid; width:100%; }
-  .imam-big-btn.hadir{ background:rgba(127,194,155,0.15); border-color:#7FC29B; color:#7FC29B; }
-  .imam-big-btn.hadir:active{ background:#7FC29B; color:var(--ink); }
-  .imam-big-btn.absen{ background:rgba(193,80,58,0.15); border-color:var(--danger); color:#E8846F; }
-  .imam-big-btn.absen:active{ background:var(--danger); color:var(--parchment); }
-  .imam-footer{ border-top:1px solid var(--line); padding-top:20px; margin-top:10px; }
-  .imam-footer .imam-hint{ margin-top:8px; }
+  .lapor-btn{ position:fixed; left:58px; bottom:14px; z-index:60; border:1px solid var(--danger); background:rgba(193,80,58,0.12); color:#E8846F; font-family:'Inter',sans-serif; font-weight:600; font-size:12px; padding:9px 12px; border-radius:20px; cursor:pointer; opacity:.35; transition:opacity .2s ease; display:none; }
+  .lapor-btn:hover{ opacity:1; }
+
+  .shadow-link{ position:fixed; top:10px; right:16px; z-index:60; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:10px; text-decoration:none; opacity:.25; transition:opacity .2s ease; }
+  .shadow-link:hover{ opacity:.9; }
+
+  .sound-unlock{ position:fixed; top:0; left:0; right:0; z-index:90; background:var(--brass); color:var(--ink); border:none; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:10px; cursor:pointer; }
 
   .overlay{ position:fixed; inset:0; background:rgba(5,15,13,0.72); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:70; padding:20px; }
   .overlay.open{ display:flex; }
@@ -204,10 +186,6 @@
   <div class="pa-title" id="paTitle">—</div>
   <div class="pa-sub" id="paSub"></div>
   <div class="pa-countdown" id="paCountdown" style="display:none;"></div>
-  <div class="pa-imam-buttons" id="paImamButtons" style="display:none;">
-    <button class="pa-imam-btn hadir" id="paImamHadirBtn">✅ Imam Hadir</button>
-    <button class="pa-imam-btn absen" id="paImamAbsenBtn">❌ Imam Berhalangan</button>
-  </div>
 </div>
 
 <button class="gear-btn" id="gearBtn" title="Pengaturan">
@@ -216,38 +194,19 @@
 
 <button class="install-btn" id="installBtn" title="Install Aplikasi" style="display:none;">📲 Install Aplikasi</button>
 
-<div class="imam-view" id="imamView" style="display:none;">
-  <div class="imam-card">
-    <img class="imam-logo" id="imamLogo" src="" alt="Logo" style="display:none;">
-    <h1 id="imamMosqueName">Masjid</h1>
-    <p class="imam-role">Konfirmasi Kehadiran Imam</p>
+<button class="lapor-btn" id="laporBtn" title="Lapor Imam Berhalangan">🚫 Lapor Berhalangan</button>
 
-    <div class="imam-status" id="imamIdleStatus">
-      <div class="imam-idle-icon">🕌</div>
-      <p>Menunggu waktu sholat berikutnya...</p>
-      <p class="imam-hint">Biarkan aplikasi ini terbuka/berjalan di latar belakang agar notifikasi bisa masuk saat waktu sholat tiba.</p>
-    </div>
+<a class="shadow-link" id="shadowLink" href="https://salat.markazsunnah.com/" target="_blank" rel="noopener">Jadwal Wahdah Islamiyah ↗</a>
 
-    <div class="imam-status" id="imamActiveStatus" style="display:none;">
-      <div class="imam-active-icon">🔔</div>
-      <p class="imam-prayer-label" id="imamPrayerLabel">Waktu Sholat — Telah Tiba</p>
-      <p class="imam-hint">Mohon konfirmasi kehadiran Anda</p>
-      <div class="imam-buttons">
-        <button class="imam-big-btn hadir" id="imamHadirBtn">✅ Saya Hadir</button>
-        <button class="imam-big-btn absen" id="imamAbsenBtn">❌ Berhalangan</button>
-      </div>
-    </div>
+<button class="sound-unlock" id="soundUnlockBtn" style="display:none;">🔊 Ketuk untuk mengaktifkan suara notifikasi</button>
 
-    <div class="imam-status" id="imamDoneStatus" style="display:none;">
-      <div class="imam-idle-icon" id="imamDoneIcon">✅</div>
-      <p id="imamDoneText">Konfirmasi terkirim. Terima kasih.</p>
-    </div>
-
-    <div class="imam-footer">
-      <button class="btn small" id="imamNotifBtn">🔔 Aktifkan Notifikasi</button>
-      <p class="imam-hint" id="imamNotifStatus"></p>
-      <p class="imam-hint" id="imamSyncStatus" style="margin-top:14px;"></p>
-    </div>
+<div class="overlay" id="laporOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="close-x" id="closeLapor">&times;</button>
+    <h2>Lapor Imam Berhalangan</h2>
+    <p class="sub">Tandai sholat yang Anda tidak bisa hadiri. Layar akan menampilkan "Silakan Qomat" untuk sholat itu. Kalau ternyata bisa hadir lagi, tekan sekali lagi untuk membatalkan.</p>
+    <div id="laporList"></div>
+    <div id="laporStatus" class="status-msg"></div>
   </div>
 </div>
 
@@ -352,30 +311,74 @@
       <div id="paStatus" class="status-msg"></div>
 
       <div style="margin-top:26px; padding-top:20px; border-top:1px solid var(--line);">
-        <label class="prayer-check-row" style="margin-top:0;">
-          <input type="checkbox" id="imamEnabled"> <strong>Aktifkan konfirmasi kehadiran Imam</strong>
+        <span class="field-label" style="margin-top:0;">🔊 Suara Notifikasi Adzan</span>
+        <p class="sub" style="margin:4px 0 10px;">Bunyi otomatis saat masuk waktu sholat (seperti "tiiit...").</p>
+        <div class="two-col">
+          <div>
+            <span class="field-label" style="margin-top:0;">Nada</span>
+            <select id="soundAdzanTone">
+              <option value="880">Nada Tinggi</option>
+              <option value="587">Nada Sedang</option>
+              <option value="392">Nada Rendah</option>
+            </select>
+          </div>
+          <div>
+            <span class="field-label" style="margin-top:0;">Pola Bunyi</span>
+            <select id="soundAdzanPattern">
+              <option value="steady">Berkelanjutan (tiiiit)</option>
+              <option value="pulse">Berdenyut (tit... tit... tit)</option>
+            </select>
+          </div>
+        </div>
+        <span class="field-label">Durasi (detik)</span>
+        <input type="number" id="soundAdzanDuration" min="1" max="30" value="5" style="max-width:140px;">
+        <div class="row-actions" style="margin-top:10px;">
+          <button class="btn small" id="testAdzanSoundBtn">▶ Tes Suara</button>
+        </div>
+
+        <span class="field-label" style="margin-top:18px;">Atau unggah suara sendiri (opsional)</span>
+        <input type="file" id="soundAdzanFile" accept="audio/*">
+        <div class="row-actions" id="soundAdzanFileRow" style="margin-top:8px; display:none;">
+          <button class="btn small danger" id="removeAdzanSoundBtn">Hapus suara custom</button>
+        </div>
+        <p class="hint" id="soundAdzanFileStatus"></p>
+
+        <label class="prayer-check-row" style="margin-top:18px;">
+          <input type="checkbox" id="soundIqomahBeep" checked> <strong>Bunyi hitung mundur Iqomah 10 detik terakhir</strong>
         </label>
-        <p class="sub" style="margin:4px 0 10px;">Saat masuk waktu adzan, layar TV & aplikasi imam menampilkan tombol "Hadir" / "Berhalangan". Kalau sampai notifikasi adzan berakhir belum ada yang konfirmasi "Hadir", layar otomatis menampilkan peringatan "Imam Berhalangan — Silakan Qomat".</p>
+
+        <div class="row-actions" style="margin-top:14px;">
+          <button class="btn primary" id="saveSoundBtn">Simpan Pengaturan Suara</button>
+        </div>
+        <div id="soundStatus" class="status-msg"></div>
+      </div>
+
+      <div style="margin-top:26px; padding-top:20px; border-top:1px solid var(--line);">
+        <label class="prayer-check-row" style="margin-top:0;">
+          <input type="checkbox" id="imamEnabled"> <strong>Aktifkan pelaporan "Imam Berhalangan"</strong>
+        </label>
+        <p class="sub" style="margin:4px 0 10px;">Layar berjalan normal seperti biasa (hanya hitung mundur iqomah). Tidak ada info apa pun soal kehadiran imam yang ditampilkan — <em>kecuali</em> ada laporan "berhalangan" yang masuk, barulah layar menampilkan peringatan "Silakan Qomat".</p>
         <span class="field-label">Berlaku untuk waktu sholat</span>
         <div class="prayer-check-row" id="imamPrayerChecks"></div>
 
         <span class="field-label" style="margin-top:20px;">URL Sinkronisasi (Google Apps Script)</span>
-        <p class="sub" style="margin:-2px 0 8px;">Wajib diisi agar konfirmasi dari HP imam bisa sampai ke TV (keduanya perangkat berbeda). Kosongkan kalau imam hanya akan konfirmasi langsung di TV.</p>
+        <p class="sub" style="margin:-2px 0 8px;">Isi ini kalau imam akan melapor dari HP-nya sendiri (perangkat berbeda dari TV). Kosongkan kalau laporan cukup dilakukan langsung di TV.</p>
         <input type="text" id="imamSyncUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
         <p class="hint" id="imamSyncTestResult"></p>
 
         <div class="row-actions" style="margin-top:14px;">
           <button class="btn" id="testImamSyncBtn">Tes Koneksi</button>
-          <button class="btn primary" id="saveImamBtn">Simpan Pengaturan Konfirmasi Imam</button>
+          <button class="btn primary" id="saveImamBtn">Simpan Pengaturan Imam</button>
         </div>
         <div id="imamStatus" class="status-msg"></div>
 
-        <span class="field-label" style="margin-top:20px;">Link untuk HP Imam</span>
+        <span class="field-label" style="margin-top:20px;">Link Khusus untuk HP Imam</span>
+        <p class="sub" style="margin:-2px 0 8px;">Kirim link ini ke imam (WhatsApp, dll). Simpan pengaturan di atas dulu (URL Sinkronisasi wajib diisi) supaya link-nya lengkap. Link ini yang memunculkan tombol "🚫 Lapor Berhalangan" — tombol itu <strong>tidak</strong> muncul di TV/perangkat lain.</p>
         <div class="row-actions">
           <input type="text" id="imamLinkOutput" readonly style="flex:1;">
           <button class="btn small" id="copyImamLinkBtn">Salin Link</button>
         </div>
-        <p class="hint">Kirim link ini ke imam (WhatsApp dll). Ia buka sekali di HP-nya, lalu install sebagai aplikasi (tombol "📲 Install Aplikasi" akan muncul), dan aktifkan notifikasi di halaman itu.</p>
+        <p class="hint">Imam buka link ini sekali di HP-nya → tekan "📲 Install Aplikasi" supaya jadi app tersendiri → sejak itu tombol Lapor Berhalangan selalu tersedia di HP-nya, walau dibuka lewat ikon app (bukan link lagi).</p>
       </div>
     </div>
 
@@ -457,6 +460,7 @@
   const DEFAULT_ID = { name:"Masjid", loc: DEFAULT_SCHEDULE.location, logo: DEFAULT_LOGO };
   const DEFAULT_PA = { enabled:true, prayers:{subuh:true,duha:false,dzuhur:true,ashar:true,maghrib:true,isya:true}, gapToIqomah:5, iqomahCountdown:15, blackoutMinutes:10 };
   const DEFAULT_IMAM = { enabled:true, prayers:{subuh:true,duha:false,dzuhur:true,ashar:true,maghrib:true,isya:true}, syncUrl:'' };
+  const DEFAULT_SOUND = { adzanTone:880, adzanPattern:'steady', adzanDuration:5, adzanCustom:'', iqomahBeep:true };
 
   let schedule = DEFAULT_SCHEDULE;
   let ticker = DEFAULT_TICKER;
@@ -464,7 +468,8 @@
   let identity = DEFAULT_ID;
   let prayerAuto = DEFAULT_PA;
   let imamCfg = DEFAULT_IMAM;
-  let imamConfirm = { date:'', status:{} }; // per-day, per-prayer: 'hadir' | 'absen' | undefined
+  let imamReports = { date:'', status:{} }; // per-day map: prayerKey -> true if imam reported "berhalangan"
+  let soundCfg = DEFAULT_SOUND;
   let parsedUpload = null;
   let tempBanners = [];
   let prayerActive = false; // true while adzan/iqomah/blackout overlay is showing
@@ -495,9 +500,21 @@
     });
   }
 
-  // ---- route: normal TV display vs dedicated imam-confirmation page (?imam=1) ----
+  // ---- detect whether this device is "the imam's device" (opened via the special link) ----
   const urlParams = new URLSearchParams(location.search);
-  const isImamPage = urlParams.get('imam') === '1';
+  if(urlParams.get('imam') === '1'){
+    try{
+      localStorage.setItem('imam_device', '1');
+      const syncFromUrl = urlParams.get('sync');
+      if(syncFromUrl) localStorage.setItem('imam_sync_url', syncFromUrl);
+    }catch(e){}
+  }
+  let isImamDevice = false;
+  try{ isImamDevice = urlParams.get('imam')==='1' || localStorage.getItem('imam_device')==='1'; }catch(e){}
+  function effectiveSyncUrl(){
+    if(imamCfg.syncUrl) return imamCfg.syncUrl; // admin's own device with settings configured
+    try{ return localStorage.getItem('imam_sync_url') || ''; }catch(e){ return ''; }
+  }
 
   const hasCloud = (typeof window.storage !== 'undefined');
   async function storeGet(key){
@@ -517,12 +534,14 @@
     const i = await storeGet('mosque_identity_v1'); if(i) identity = {...DEFAULT_ID, ...JSON.parse(i)};
     const p = await storeGet('mosque_prayer_auto_v1'); if(p) prayerAuto = JSON.parse(p);
     const im = await storeGet('mosque_imam_cfg_v1'); if(im) imamCfg = JSON.parse(im);
-    const ic = await storeGet('mosque_imam_confirm_v1'); if(ic) imamConfirm = JSON.parse(ic);
+    const ic = await storeGet('mosque_imam_reports_v1'); if(ic) imamReports = JSON.parse(ic);
+    const sc = await storeGet('mosque_sound_cfg_v1'); if(sc) soundCfg = {...DEFAULT_SOUND, ...JSON.parse(sc)};
 
     renderIdentity();
     renderTickerAndBannersUI();
     renderPaUI();
     renderImamUI();
+    renderSoundUI();
     renderGridSkeleton();
     initBannerEngine();
     tick();
@@ -901,33 +920,36 @@
 
   function imamLinkUrl(){
     const base = location.origin + location.pathname;
-    const sep = imamCfg.syncUrl ? `&sync=${encodeURIComponent(imamCfg.syncUrl)}` : '';
-    return `${base}?imam=1${sep}`;
+    if(!imamCfg.syncUrl) return '';
+    return `${base}?imam=1&sync=${encodeURIComponent(imamCfg.syncUrl)}`;
   }
 
   function renderImamUI(){
     $('imamEnabled').checked = !!imamCfg.enabled;
     $('imamSyncUrl').value = imamCfg.syncUrl || '';
-    $('imamLinkOutput').value = imamLinkUrl();
     const box = $('imamPrayerChecks'); box.innerHTML='';
     PRAYERS.forEach(p=>{
       const lab = document.createElement('label');
       lab.innerHTML = `<input type="checkbox" class="imam-prayer-cb" data-key="${p.key}" ${imamCfg.prayers[p.key]?'checked':''}> ${p.label}`;
       box.appendChild(lab);
     });
+    const link = imamLinkUrl();
+    $('imamLinkOutput').value = link || 'Isi & simpan URL Sinkronisasi dulu di atas...';
   }
+  $('copyImamLinkBtn').addEventListener('click', async ()=>{
+    const link = imamLinkUrl();
+    if(!link){ $('imamStatus').textContent = 'Isi & simpan URL Sinkronisasi dulu.'; $('imamStatus').className='status-msg err'; return; }
+    try{ await navigator.clipboard.writeText(link); $('imamStatus').textContent='Link disalin.'; $('imamStatus').className='status-msg ok'; }
+    catch(e){ $('imamLinkOutput').select(); document.execCommand('copy'); $('imamStatus').textContent='Link disalin.'; $('imamStatus').className='status-msg ok'; }
+  });
   $('saveImamBtn').addEventListener('click', async ()=>{
     const prayers = {};
     document.querySelectorAll('.imam-prayer-cb').forEach(cb=> prayers[cb.dataset.key] = cb.checked);
     imamCfg = { enabled: $('imamEnabled').checked, prayers, syncUrl: $('imamSyncUrl').value.trim() };
     await storeSet('mosque_imam_cfg_v1', JSON.stringify(imamCfg));
     renderImamUI();
-    $('imamStatus').textContent = 'Pengaturan konfirmasi imam tersimpan.';
+    $('imamStatus').textContent = 'Pengaturan imam tersimpan.';
     $('imamStatus').className = 'status-msg ok';
-  });
-  $('copyImamLinkBtn').addEventListener('click', async ()=>{
-    try{ await navigator.clipboard.writeText($('imamLinkOutput').value); $('imamStatus').textContent='Link disalin.'; $('imamStatus').className='status-msg ok'; }
-    catch(e){ $('imamLinkOutput').select(); document.execCommand('copy'); }
   });
   $('testImamSyncBtn').addEventListener('click', async ()=>{
     const url = $('imamSyncUrl').value.trim();
@@ -989,164 +1011,197 @@
   function fmtMMSS(sec){ const m=Math.floor(sec/60), s=sec%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
 
   // ---- imam confirmation ----
-  let remoteConfirmCache = null; // {iso, prayerKey, status} from Apps Script, refreshed periodically
-  let lastPushedRequestKey = null;
+  let remoteReportsCache = null; // {"<iso>#<prayerKey>": {status:'absen', at}} from Apps Script, refreshed periodically
 
-  function getImamStatus(iso, key){
-    if(imamCfg.syncUrl && remoteConfirmCache && remoteConfirmCache.iso===iso && remoteConfirmCache.prayerKey===key){
-      return remoteConfirmCache.status;
+  function isImamAbsent(iso, key){
+    if(effectiveSyncUrl() && remoteReportsCache){
+      return !!remoteReportsCache[`${iso}#${key}`];
     }
-    if(imamConfirm.date !== iso) return undefined;
-    return imamConfirm.status ? imamConfirm.status[key] : undefined;
+    if(imamReports.date !== iso) return false;
+    return !!(imamReports.status && imamReports.status[key]);
   }
-  async function setImamStatus(iso, key, status){
-    if(imamConfirm.date !== iso) imamConfirm = { date: iso, status:{} };
-    imamConfirm.status[key] = status;
-    await storeSet('mosque_imam_confirm_v1', JSON.stringify(imamConfirm));
-    if(imamCfg.syncUrl){
-      remoteConfirmCache = { iso, prayerKey:key, status };
-      remotePost(imamCfg.syncUrl, { type:'confirm', iso, prayerKey:key, status });
+  async function setImamAbsent(iso, key, absent){
+    if(imamReports.date !== iso) imamReports = { date: iso, status:{} };
+    if(absent) imamReports.status[key] = true; else delete imamReports.status[key];
+    await storeSet('mosque_imam_reports_v1', JSON.stringify(imamReports));
+    const url = effectiveSyncUrl();
+    if(url){
+      if(!remoteReportsCache) remoteReportsCache = {};
+      if(absent) remoteReportsCache[`${iso}#${key}`] = true; else delete remoteReportsCache[`${iso}#${key}`];
+      remotePost(url, { iso, prayerKey:key, action: absent ? 'set' : 'clear' });
     }
   }
-  async function pollRemoteConfirm(){
-    if(!imamCfg.syncUrl) return;
-    const data = await remoteGet(imamCfg.syncUrl);
-    if(data && data.confirm) remoteConfirmCache = data.confirm;
-  }
-  function pushImamRequest(state, todayIso){
-    if(!imamCfg.syncUrl) return;
-    const needsImam = imamCfg.enabled && imamCfg.prayers[state && state.key];
-    const active = state && state.phase==='adzan' && needsImam;
-    const key = active ? `${todayIso}#${state.key}#adzan` : `${todayIso}#none`;
-    if(lastPushedRequestKey === key) return;
-    lastPushedRequestKey = key;
-    remotePost(imamCfg.syncUrl, { type:'request', request: active ? { iso:todayIso, prayerKey:state.key, label:state.label, deadlineEpoch: Date.now()+state.remaining*1000 } : null });
+  async function pollRemoteReports(){
+    const url = effectiveSyncUrl();
+    if(!url) return;
+    const data = await remoteGet(url);
+    if(data) remoteReportsCache = data;
   }
 
-  // ---- dedicated imam-confirmation page (opened via ?imam=1&sync=<url>) ----
-  function initImamPage(){
-    document.querySelector('.app').style.display = 'none';
-    $('gearBtn').style.display = 'none';
-    $('imamView').style.display = 'flex';
+  // ---- "Lapor Imam Berhalangan" floating button + modal (same on every device running this app) ----
+  const laporOverlay = $('laporOverlay');
+  if(isImamDevice) $('laporBtn').style.display = 'block';
+  $('laporBtn').addEventListener('click', ()=>{ renderLaporList(); laporOverlay.classList.add('open'); });
+  $('closeLapor').addEventListener('click', ()=> laporOverlay.classList.remove('open'));
+  laporOverlay.addEventListener('click', (e)=>{ if(e.target===laporOverlay) laporOverlay.classList.remove('open'); });
 
-    const syncUrl = urlParams.get('sync') || '';
-    if(!syncUrl){ $('imamSyncStatus').textContent = '⚠️ Link ini belum berisi kode sinkronisasi. Minta admin kirim ulang link dari menu Pengaturan.'; }
-
-    (async ()=>{
-      const i = await storeGet('mosque_identity_v1');
-      if(i){
-        const id = JSON.parse(i);
-        if(id.name) $('imamMosqueName').textContent = id.name;
-        if(id.logo){ $('imamLogo').src = id.logo; $('imamLogo').style.display='block'; }
-      }
-    })();
-
-    function updateNotifBtn(){
-      if(!('Notification' in window)){ $('imamNotifBtn').style.display='none'; $('imamNotifStatus').textContent='Browser ini tidak mendukung notifikasi.'; return; }
-      if(Notification.permission === 'granted'){ $('imamNotifBtn').textContent = '🔔 Notifikasi Aktif'; $('imamNotifBtn').disabled = true; }
-      else { $('imamNotifBtn').textContent = '🔔 Aktifkan Notifikasi'; $('imamNotifBtn').disabled = false; }
+  function renderLaporList(){
+    const now = wibNow();
+    const row = findRow(now.iso);
+    const wrap = $('laporList');
+    wrap.innerHTML = '';
+    if(!row || !imamCfg.enabled){
+      wrap.innerHTML = '<p class="empty-note">Fitur ini belum diaktifkan (lihat Pengaturan → Adzan &amp; Iqomah).</p>';
+      return;
     }
-    updateNotifBtn();
-    $('imamNotifBtn').addEventListener('click', async ()=>{ try{ await Notification.requestPermission(); }catch(e){} updateNotifBtn(); });
+    const nowMin = now.h*60+now.m;
+    let any = false;
+    PRAYERS.forEach((p,idx)=>{
+      if(!imamCfg.prayers[p.key]) return;
+      const [hh,mm] = row[2+idx].split(':').map(Number);
+      if(hh*60+mm < nowMin - 60) return; // hide prayers already well past (>1 jam lalu)
+      any = true;
+      const absent = isImamAbsent(now.iso, p.key);
+      const el = document.createElement('div');
+      el.className = 'banner-item';
+      el.innerHTML = `<div class="bi-row" style="justify-content:space-between;">
+        <span style="font-family:'Fraunces',serif;font-size:16px;">${p.label} <span class="hint" style="display:inline;">(${row[2+idx]})</span></span>
+        <button class="btn small ${absent?'primary':''}" data-key="${p.key}">${absent ? '✅ Batalkan Laporan' : '🚫 Tandai Berhalangan'}</button>
+      </div>`;
+      wrap.appendChild(el);
+    });
+    if(!any) wrap.innerHTML = '<p class="empty-note">Tidak ada sholat yang perlu dilaporkan saat ini.</p>';
+    wrap.querySelectorAll('button[data-key]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const key = btn.dataset.key;
+        const currentlyAbsent = isImamAbsent(now.iso, key);
+        await setImamAbsent(now.iso, key, !currentlyAbsent);
+        $('laporStatus').textContent = !currentlyAbsent ? `Dilaporkan: Imam berhalangan untuk ${key}.` : 'Laporan dibatalkan.';
+        $('laporStatus').className = 'status-msg ok';
+        renderLaporList();
+        const st = paCheck(now.iso, now.h*3600+now.m*60+now.s);
+        renderPaOverlay(st, now.iso);
+      });
+    });
+  }
 
-    let lastNotifiedKey = null;
-    let lastSeenRequest = null;
+  // ---- sound engine (Web Audio — no external files needed for the built-in tones) ----
+  let audioCtx = null;
+  function getAudioCtx(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return audioCtx; }
+  function unlockAudio(){
+    const ctx = getAudioCtx();
+    if(ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    $('soundUnlockBtn').style.display = 'none';
+  }
+  $('soundUnlockBtn').addEventListener('click', unlockAudio);
+  document.addEventListener('click', function firstClick(){ unlockAudio(); }, { once:true });
+  setTimeout(()=>{ const ctx = getAudioCtx(); if(ctx && ctx.state === 'suspended') $('soundUnlockBtn').style.display = 'block'; }, 1200);
 
-    async function showConfirmNotification(req){
-      if(!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  function beep(freq, durationMs, type){
+    const ctx = getAudioCtx(); if(!ctx) return;
+    try{
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = type||'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+durationMs/1000);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + durationMs/1000 + 0.03);
+    }catch(e){}
+  }
+  function playAdzanSound(){
+    if(soundCfg.adzanCustom){ try{ new Audio(soundCfg.adzanCustom).play().catch(()=>{}); }catch(e){} return; }
+    const durMs = Math.max(1,Number(soundCfg.adzanDuration)||5) * 1000;
+    const freq = Number(soundCfg.adzanTone) || 880;
+    if(soundCfg.adzanPattern === 'pulse'){
+      let elapsed = 0;
+      const step = ()=>{ if(elapsed >= durMs) return; beep(freq, 320, 'sine'); elapsed += 550; setTimeout(step, 550); };
+      step();
+    } else {
+      const ctx = getAudioCtx(); if(!ctx) return;
       try{
-        const reg = await navigator.serviceWorker.ready;
-        reg.showNotification(`Waktu Sholat ${req.label} Telah Tiba`, {
-          body: 'Ketuk untuk konfirmasi kehadiran Anda',
-          icon: './icon-192.png', badge: './icon-192.png',
-          tag: `adzan-${req.iso}-${req.prayerKey}`,
-          requireInteraction: true,
-          actions: [{action:'hadir', title:'✅ Hadir'},{action:'absen', title:'❌ Berhalangan'}],
-          data: { syncUrl, iso: req.iso, prayerKey: req.prayerKey, imamUrl: location.href }
-        });
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type='sine'; osc.frequency.value = freq;
+        const durSec = durMs/1000;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime+0.08);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime + Math.max(0.1,durSec-0.15));
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durSec);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + durSec + 0.05);
       }catch(e){}
     }
-    function showActive(req){ $('imamIdleStatus').style.display='none'; $('imamDoneStatus').style.display='none'; $('imamActiveStatus').style.display='block'; $('imamPrayerLabel').textContent = `Waktu Sholat ${req.label} Telah Tiba`; }
-    function showIdle(){ $('imamIdleStatus').style.display='block'; $('imamActiveStatus').style.display='none'; $('imamDoneStatus').style.display='none'; }
-    function showDone(status){
-      $('imamActiveStatus').style.display='none'; $('imamIdleStatus').style.display='none'; $('imamDoneStatus').style.display='block';
-      $('imamDoneIcon').textContent = status==='hadir' ? '✅' : '❌';
-      $('imamDoneText').textContent = status==='hadir' ? 'Terima kasih, kehadiran Anda sudah tercatat.' : 'Baik, status "berhalangan" sudah tercatat.';
-    }
-    async function confirmStatus(req, status){ await remotePost(syncUrl, { type:'confirm', iso: req.iso, prayerKey: req.prayerKey, status }); showDone(status); }
-    $('imamHadirBtn').addEventListener('click', ()=>{ if(lastSeenRequest) confirmStatus(lastSeenRequest, 'hadir'); });
-    $('imamAbsenBtn').addEventListener('click', ()=>{ if(lastSeenRequest) confirmStatus(lastSeenRequest, 'absen'); });
-
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.addEventListener('message', (event)=>{ if(event.data && event.data.type==='IMAM_CONFIRM') showDone(event.data.status); });
-    }
-
-    async function poll(){
-      if(!syncUrl) return;
-      const data = await remoteGet(syncUrl);
-      if(!data) return;
-      const req = data.request;
-      if(req && req.deadlineEpoch && Date.now() < req.deadlineEpoch){
-        lastSeenRequest = req;
-        const already = data.confirm && data.confirm.iso===req.iso && data.confirm.prayerKey===req.prayerKey;
-        if(already){ showDone(data.confirm.status); }
-        else {
-          showActive(req);
-          const key = `${req.iso}#${req.prayerKey}`;
-          if(lastNotifiedKey !== key){ lastNotifiedKey = key; showConfirmNotification(req); }
-        }
-      } else { lastSeenRequest = null; showIdle(); }
-    }
-    poll();
-    setInterval(poll, 5000);
   }
+  function playIqomahBeep(){ beep(1000, 130, 'square'); }
 
-  $('paImamHadirBtn').addEventListener('click', async ()=>{
-    const now = wibNow();
-    await setImamStatus(now.iso, currentPaKey, 'hadir');
-    const state = paCheck(now.iso, now.h*3600+now.m*60+now.s);
-    if(state) renderPaOverlay(state, now.iso);
+  function renderSoundUI(){
+    $('soundAdzanTone').value = String(soundCfg.adzanTone);
+    $('soundAdzanPattern').value = soundCfg.adzanPattern;
+    $('soundAdzanDuration').value = soundCfg.adzanDuration;
+    $('soundIqomahBeep').checked = soundCfg.iqomahBeep !== false;
+    $('soundAdzanFileRow').style.display = soundCfg.adzanCustom ? 'flex' : 'none';
+    $('soundAdzanFileStatus').textContent = soundCfg.adzanCustom ? '✅ Memakai suara custom yang diunggah.' : '';
+  }
+  $('testAdzanSoundBtn').addEventListener('click', ()=>{
+    unlockAudio();
+    const tempCfg = { adzanTone:$('soundAdzanTone').value, adzanPattern:$('soundAdzanPattern').value, adzanDuration:$('soundAdzanDuration').value, adzanCustom: soundCfg.adzanCustom };
+    const old = soundCfg; soundCfg = tempCfg; playAdzanSound(); soundCfg = old;
   });
-  $('paImamAbsenBtn').addEventListener('click', async ()=>{
-    const now = wibNow();
-    await setImamStatus(now.iso, currentPaKey, 'absen');
-    const state = paCheck(now.iso, now.h*3600+now.m*60+now.s);
-    if(state) renderPaOverlay(state, now.iso);
+  $('soundAdzanFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      soundCfg = {...soundCfg, adzanCustom: ev.target.result};
+      renderSoundUI();
+    };
+    reader.readAsDataURL(file);
   });
-  let currentPaKey = null;
+  $('removeAdzanSoundBtn').addEventListener('click', ()=>{ soundCfg = {...soundCfg, adzanCustom:''}; renderSoundUI(); });
+  $('saveSoundBtn').addEventListener('click', async ()=>{
+    soundCfg = {
+      adzanTone: Number($('soundAdzanTone').value),
+      adzanPattern: $('soundAdzanPattern').value,
+      adzanDuration: Math.max(1, Number($('soundAdzanDuration').value)||5),
+      adzanCustom: soundCfg.adzanCustom || '',
+      iqomahBeep: $('soundIqomahBeep').checked
+    };
+    await storeSet('mosque_sound_cfg_v1', JSON.stringify(soundCfg));
+    renderSoundUI();
+    $('soundStatus').textContent = 'Pengaturan suara tersimpan.';
+    $('soundStatus').className = 'status-msg ok';
+  });
+
+  let lastAdzanSoundKey = null;
+  let lastIqomahBeepSecond = null;
 
   function renderPaOverlay(state, todayIso){
     const el = $('paFullscreen');
-    pushImamRequest(state, todayIso);
-    if(!state){ el.classList.remove('show'); prayerActive=false; $('paImamButtons').style.display='none'; return; }
+    if(!state){ el.classList.remove('show'); prayerActive=false; return; }
     prayerActive = true;
-    currentPaKey = state.key;
     el.classList.add('show');
     el.classList.toggle('blackout', state.phase==='blackout');
     const needsImam = imamCfg.enabled && imamCfg.prayers[state.key];
-    const status = needsImam ? getImamStatus(todayIso, state.key) : undefined;
+    const absent = needsImam && isImamAbsent(todayIso, state.key);
 
     if(state.phase==='adzan'){
-      $('paTitle').textContent = `Waktu Sholat ${state.label} Telah Tiba`;
-      el.classList.remove('imam-absent');
-      if(needsImam && status==='hadir'){
-        $('paSub').textContent = '✅ Imam telah mengonfirmasi hadir';
-        $('paImamButtons').style.display='none';
-      } else if(needsImam && status==='absen'){
-        $('paSub').textContent = '⚠️ Imam mengonfirmasi berhalangan — mohon siapkan pengganti';
-        $('paImamButtons').style.display='none';
-      } else if(needsImam){
-        $('paSub').textContent = 'Menunggu konfirmasi kehadiran Imam...';
-        $('paImamButtons').style.display='flex';
-      } else {
-        $('paSub').textContent = 'Mari bersiap menuju masjid';
-        $('paImamButtons').style.display='none';
-      }
+      const adzanKey = `${todayIso}#${state.key}`;
+      if(lastAdzanSoundKey !== adzanKey){ lastAdzanSoundKey = adzanKey; playAdzanSound(); }
       $('paCountdown').style.display='none';
+      if(absent){
+        el.classList.add('imam-absent');
+        $('paTitle').textContent = `⚠️ Imam Berhalangan`;
+        $('paSub').textContent = `Mohon salah satu jemaah bersiap menjadi Imam ${state.label}`;
+      } else {
+        el.classList.remove('imam-absent');
+        $('paTitle').textContent = `Waktu Sholat ${state.label} Telah Tiba`;
+        $('paSub').textContent = 'Mari bersiap menuju masjid';
+      }
     } else if(state.phase==='iqomah'){
-      $('paImamButtons').style.display='none';
       $('paCountdown').style.display=''; $('paCountdown').textContent = fmtMMSS(state.remaining);
-      if(needsImam && status !== 'hadir'){
+      if(soundCfg.iqomahBeep !== false && state.remaining<=10 && state.remaining>=1 && lastIqomahBeepSecond!==state.remaining){
+        lastIqomahBeepSecond = state.remaining; playIqomahBeep();
+      }
+      if(absent){
         el.classList.add('imam-absent');
         $('paTitle').textContent = `⚠️ Imam Berhalangan — Silakan Qomat`;
         $('paSub').textContent = `Mohon salah satu jemaah maju menjadi Imam ${state.label}`;
@@ -1370,7 +1425,7 @@
   });
 
   $('exportBtn').addEventListener('click', ()=>{
-    const payload = { schedule, ticker, banners: bannersCfg, identity, prayerAuto, imamCfg, exportedAt: new Date().toISOString() };
+    const payload = { schedule, ticker, banners: bannersCfg, identity, prayerAuto, imamCfg, soundCfg, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'cadangan-jadwal-masjid.json'; a.click();
@@ -1390,20 +1445,21 @@
         if(data.identity) identity = data.identity;
         if(data.prayerAuto) prayerAuto = data.prayerAuto;
         if(data.imamCfg) imamCfg = data.imamCfg;
+        if(data.soundCfg) soundCfg = {...DEFAULT_SOUND, ...data.soundCfg};
         await storeSet('mosque_schedule_v1', JSON.stringify(schedule));
         await storeSet('mosque_ticker_v1', JSON.stringify(ticker));
         await storeSet('mosque_banners_v1', JSON.stringify(bannersCfg));
         await storeSet('mosque_identity_v1', JSON.stringify(identity));
         await storeSet('mosque_prayer_auto_v1', JSON.stringify(prayerAuto));
         await storeSet('mosque_imam_cfg_v1', JSON.stringify(imamCfg));
-        renderIdentity(); renderTickerAndBannersUI(); renderPaUI(); renderImamUI(); refreshScheduleTabInfo(); initBannerEngine(); tick();
+        await storeSet('mosque_sound_cfg_v1', JSON.stringify(soundCfg));
+        renderIdentity(); renderTickerAndBannersUI(); renderPaUI(); renderImamUI(); renderSoundUI(); refreshScheduleTabInfo(); initBannerEngine(); tick();
         st.textContent = 'Cadangan berhasil diimpor.'; st.className='status-msg ok';
       }catch(err){ st.textContent = 'File cadangan tidak valid.'; st.className='status-msg err'; }
     };
     reader.readAsText(file); e.target.value = '';
   });
 
-  if(isImamPage){ initImamPage(); }
-  else { loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollRemoteConfirm(); setInterval(pollRemoteConfirm, 5000); }); }
+  loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollRemoteReports(); setInterval(pollRemoteReports, 5000); });
 })();
 </script>
