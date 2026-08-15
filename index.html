@@ -362,18 +362,20 @@
         <div class="prayer-check-row" id="imamPrayerChecks"></div>
 
         <span class="field-label" style="margin-top:20px;">URL Sinkronisasi (Google Apps Script)</span>
-        <p class="sub" style="margin:-2px 0 8px;">Isi URL ini agar <strong>semua pengaturan</strong> (jadwal, banner/video, pengumuman, identitas, dll) otomatis tersinkron ke semua perangkat yang menjalankan aplikasi ini — bukan cuma laporan imam. Kosongkan kalau aplikasi hanya dijalankan di satu perangkat saja.</p>
+        <p class="sub" style="margin:-2px 0 8px;">Isi URL ini agar <strong>semua pengaturan</strong> (jadwal, banner/video, pengumuman, identitas, dll) otomatis tersinkron ke semua perangkat. <strong>Penting:</strong> mengisi kolom ini saja hanya berlaku di perangkat/browser ini. Supaya berlaku otomatis di SEMUA perangkat sejak awal dibuka (tanpa perlu diatur satu-satu), klik "Unduh config.json" di bawah lalu upload file itu ke GitHub (timpa yang lama).</p>
         <input type="text" id="imamSyncUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
         <p class="hint" id="imamSyncTestResult"></p>
 
         <div class="row-actions" style="margin-top:14px;">
           <button class="btn" id="testImamSyncBtn">Tes Koneksi</button>
-          <button class="btn primary" id="saveImamBtn">Simpan Pengaturan Imam</button>
+          <button class="btn" id="downloadConfigBtn">⬇ Unduh config.json</button>
+          <button class="btn primary" id="saveImamBtn">Simpan (perangkat ini saja)</button>
         </div>
         <div id="imamStatus" class="status-msg"></div>
+        <p class="hint" id="configSyncStatus"></p>
 
         <span class="field-label" style="margin-top:20px;">Link Khusus untuk HP Imam</span>
-        <p class="sub" style="margin:-2px 0 8px;">Kirim link ini ke imam (WhatsApp, dll). Simpan pengaturan di atas dulu (URL Sinkronisasi wajib diisi) supaya link-nya lengkap. Link ini yang memunculkan tombol "🚫 Lapor Berhalangan" — tombol itu <strong>tidak</strong> muncul di TV/perangkat lain.</p>
+        <p class="sub" style="margin:-2px 0 8px;">Kirim link ini ke imam (WhatsApp, dll). Link ini yang memunculkan tombol "🚫 Lapor Berhalangan" — tombol itu <strong>tidak</strong> muncul di TV/perangkat lain.</p>
         <div class="row-actions">
           <input type="text" id="imamLinkOutput" readonly style="flex:1;">
           <button class="btn small" id="copyImamLinkBtn">Salin Link</button>
@@ -511,9 +513,20 @@
   }
   let isImamDevice = false;
   try{ isImamDevice = urlParams.get('imam')==='1' || localStorage.getItem('imam_device')==='1'; }catch(e){}
+
+  // ---- config.json: the sync URL baked in here is the default for EVERY device that opens
+  // this site, so settings sync automatically without any per-device setup. ----
+  let configSyncUrl = '';
+  async function loadConfig(){
+    try{
+      const r = await fetch('./config.json', { cache:'no-store' });
+      if(r.ok){ const j = await r.json(); configSyncUrl = (j && j.syncUrl) || ''; }
+    }catch(e){}
+  }
   function effectiveSyncUrl(){
-    if(imamCfg.syncUrl) return imamCfg.syncUrl; // admin's own device with settings configured
-    try{ return localStorage.getItem('imam_sync_url') || ''; }catch(e){ return ''; }
+    if(imamCfg.syncUrl) return imamCfg.syncUrl; // explicit per-device override, entered in Settings
+    if(configSyncUrl) return configSyncUrl; // default for every device, from config.json
+    try{ return localStorage.getItem('imam_sync_url') || ''; }catch(e){ return ''; } // legacy imam-link fallback
   }
 
   const hasCloud = (typeof window.storage !== 'undefined');
@@ -921,8 +934,9 @@
 
   function imamLinkUrl(){
     const base = location.origin + location.pathname;
-    if(!imamCfg.syncUrl) return '';
-    return `${base}?imam=1&sync=${encodeURIComponent(imamCfg.syncUrl)}`;
+    const url = effectiveSyncUrl();
+    if(!url) return '';
+    return `${base}?imam=1&sync=${encodeURIComponent(url)}`;
   }
 
   function renderImamUI(){
@@ -935,7 +949,11 @@
       box.appendChild(lab);
     });
     const link = imamLinkUrl();
-    $('imamLinkOutput').value = link || 'Isi & simpan URL Sinkronisasi dulu di atas...';
+    $('imamLinkOutput').value = link || 'Isi URL Sinkronisasi dulu (atau pastikan config.json sudah diisi)...';
+    $('configSyncStatus').textContent = configSyncUrl
+      ? `✅ config.json aktif dan otomatis berlaku di semua perangkat (${configSyncUrl.slice(0,50)}...).`
+      : '⚠️ config.json belum diisi — pengaturan baru berlaku di perangkat ini saja sampai Anda unduh & upload config.json.';
+    $('configSyncStatus').className = configSyncUrl ? 'status-msg ok' : 'hint';
   }
   $('copyImamLinkBtn').addEventListener('click', async ()=>{
     const link = imamLinkUrl();
@@ -963,6 +981,16 @@
       if(r.ok){ el.textContent = '✅ Berhasil terhubung ke Apps Script.'; el.className='status-msg ok'; }
       else { el.textContent = `⚠️ Server merespons tapi statusnya ${r.status}. Cek lagi deployment-nya (akses "Anyone").`; el.className='status-msg err'; }
     }catch(e){ el.textContent = '❌ Gagal terhubung. Cek URL & pastikan deployment diakses "Anyone".'; el.className='status-msg err'; }
+  });
+  $('downloadConfigBtn').addEventListener('click', ()=>{
+    const url = $('imamSyncUrl').value.trim();
+    if(!url){ $('imamStatus').textContent = 'Isi URL Sinkronisasi dulu sebelum diunduh.'; $('imamStatus').className='status-msg err'; return; }
+    const blob = new Blob([JSON.stringify({ syncUrl: url }, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'config.json'; a.click();
+    URL.revokeObjectURL(a.href);
+    $('imamStatus').textContent = 'config.json terunduh — upload/timpa file itu di GitHub (folder utama/root) supaya berlaku di semua perangkat.';
+    $('imamStatus').className = 'status-msg ok';
   });
 
   // ---- remote sync (Google Apps Script) ----
@@ -1513,6 +1541,8 @@
     reader.readAsText(file); e.target.value = '';
   });
 
-  loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollFullSync(); setInterval(pollFullSync, 12000); });
+  loadConfig().then(()=>{
+    loadAll().then(()=>{ refreshScheduleTabInfo(); setInterval(tick, 1000); pollFullSync(); setInterval(pollFullSync, 12000); });
+  });
 })();
 </script>
