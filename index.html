@@ -6,6 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="https://player.vimeo.com/api/player.js"></script>
 
@@ -60,6 +61,17 @@
   .ann-fullscreen.show{ opacity:1; visibility:visible; }
   .ann-fullscreen img{ max-width:100%; max-height:100%; object-fit:contain; }
   .ann-fullscreen .ann-caption{ position:absolute; left:0; right:0; bottom:0; background:linear-gradient(0deg, rgba(10,38,33,0.85), transparent); color:var(--parchment); font-family:'Inter',sans-serif; font-weight:600; font-size:clamp(14px,1.4vw,20px); text-align:center; padding:22px 40px 26px; }
+
+  .sheet-box{ width:100%; height:100%; overflow:hidden; padding:clamp(30px,5vw,70px); box-sizing:border-box; }
+  .sheet-scroll{ display:inline-block; }
+  @keyframes sheetScrollUp{ from{ transform:translateY(100%); } to{ transform:translateY(-100%); } }
+  .sheet-row-view{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; gap:16px; }
+  .sheet-row-line{ font-family:'Inter',sans-serif; color:var(--parchment); font-size:clamp(20px,3vw,42px); }
+  .sheet-row-line b{ color:var(--brass-bright); font-family:'Fraunces',serif; font-weight:600; }
+  .sheet-table{ width:100%; border-collapse:collapse; font-family:'Inter',sans-serif; }
+  .sheet-table th,.sheet-table td{ border:1px solid var(--line); padding:clamp(8px,1vw,16px); font-size:clamp(13px,1.4vw,22px); color:var(--parchment); text-align:center; }
+  .sheet-table th{ background:var(--panel-2); color:var(--brass-bright); font-family:'Fraunces',serif; }
+  .sheet-table tr:nth-child(even) td{ background:rgba(201,162,39,0.05); }
 
   /* prayer automation overlay - higher priority than banners */
   .pa-fullscreen{ position:fixed; inset:0; z-index:55; background:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; visibility:hidden; transition:opacity .5s ease; text-align:center; }
@@ -178,6 +190,7 @@
 <div class="ann-fullscreen" id="annFullscreen">
   <img id="annFullscreenImg" src="" alt="Pengumuman">
   <div id="annVideoBox" style="display:none; width:100%; height:100%; align-items:center; justify-content:center;"></div>
+  <div id="annSheetBox" class="sheet-box" style="display:none;"></div>
   <div class="ann-caption" id="annFullscreenCaption"></div>
 </div>
 
@@ -260,7 +273,44 @@
       <div class="row-actions" style="margin-top:14px;">
         <button class="btn" id="addBannerBtn">+ Tambah Banner Gambar</button>
         <button class="btn" id="addVideoBtn">+ Tambah Video (Link)</button>
+        <button class="btn" id="addPdfDailyBtn">+ Set Harian dari PDF 🗓️</button>
+        <button class="btn" id="addSheetBtn">+ Dari Google Sheets 📊</button>
         <input type="file" id="bannerFileInput" accept="image/*" multiple style="display:none;">
+        <input type="file" id="pdfDailyFileInput" accept="application/pdf" style="display:none;">
+      </div>
+      <p class="hint" style="margin-top:4px;">"Set Harian dari PDF" = tiap halaman PDF jadi 1 gambar, tampil satu per hari bergantian lalu ulang dari awal. Cocok untuk kosakata harian atau materi buku per halaman. <strong>Wajib isi URL Sinkronisasi dulu</strong> (tab Adzan &amp; Iqomah) karena halamannya diunggah ke Google Drive.</p>
+      <div class="overlay" id="pdfDailyOverlay">
+        <div class="modal" style="max-width:440px;">
+          <button class="close-x" id="closePdfDaily">&times;</button>
+          <h2>Set Harian dari PDF</h2>
+          <p class="sub" id="pdfDailyStatus">Memproses...</p>
+          <div style="background:var(--ink); border:1px solid var(--line); border-radius:8px; height:10px; overflow:hidden; margin-top:10px;">
+            <div id="pdfDailyBar" style="background:var(--brass); height:100%; width:0%; transition:width .2s;"></div>
+          </div>
+          <p class="hint" id="pdfDailyDetail" style="margin-top:8px;"></p>
+        </div>
+      </div>
+      <div class="overlay" id="sheetAddOverlay">
+        <div class="modal" style="max-width:460px;">
+          <button class="close-x" id="closeSheetAdd">&times;</button>
+          <h2>Pengumuman dari Google Sheets</h2>
+          <p class="sub">Tampilkan data dari spreadsheet Anda — misalnya daftar nilai santri. Sheet harus bisa diakses oleh akun Google yang dipakai untuk Apps Script.</p>
+          <span class="field-label" style="margin-top:0;">Link Google Sheets</span>
+          <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/....">
+          <span class="field-label">Nama tab/sheet (opsional)</span>
+          <input type="text" id="sheetTabInput" placeholder="Kosongkan = tab pertama">
+          <span class="field-label">Mode Tampilan</span>
+          <div class="radio-row">
+            <label><input type="radio" name="sheetMode" value="rotate" checked> Baris bergantian tiap hari</label>
+            <label><input type="radio" name="sheetMode" value="table"> Tampilkan tabel utuh</label>
+          </div>
+          <p class="hint" id="sheetAddHint" style="margin-top:8px;">Mode "baris bergantian": tiap hari menampilkan 1 baris data berbeda (kolom pertama dianggap header/label). Kalau teks panjang & tak muat layar, otomatis scroll dari bawah ke atas.</p>
+          <div class="row-actions" style="margin-top:12px;">
+            <button class="btn" id="testSheetBtn">Tes Baca Sheet</button>
+            <button class="btn primary" id="confirmAddSheetBtn">Tambahkan</button>
+          </div>
+          <div id="sheetAddStatus" class="status-msg"></div>
+        </div>
       </div>
       <div class="row-actions" id="videoAddForm" style="display:none; margin-top:10px; background:var(--ink); border:1px solid var(--line); border-radius:9px; padding:12px; flex-direction:column; align-items:stretch;">
         <span class="field-label" style="margin-top:0;">Link video (YouTube, Vimeo, atau file .mp4 langsung)</span>
@@ -582,11 +632,11 @@
      Priority when multiple are ready at once: scheduled > interval > cycle.
      Everything pauses while prayerActive (adzan/iqomah/blackout) is showing.
   ===================================================================== */
-  let engine = { showingUntil:0, cycleIdx:0, cycleNextDue:0, current:null };
+  let engine = { showingUntil:0, cycleIdx:0, cycleNextDue:0, current:null, subQueue:[], pendingSheetFetch:false };
 
   function initBannerEngine(){
     const now = Date.now();
-    engine = { showingUntil:0, cycleIdx:0, cycleNextDue:now, current:null };
+    engine = { showingUntil:0, cycleIdx:0, cycleNextDue:now, current:null, subQueue:[], pendingSheetFetch:false };
     (bannersCfg.items||[]).forEach(b=>{
       b._nextDue = now + (Number(b.intervalMinutes)||15)*60000;
       b._lastTriggerKey = null;
@@ -684,24 +734,34 @@
   }
 
 
-  function bannerTick(nowMs, nowHM, nowDay){
+  function bannerTick(nowMs, nowHM, nowDay, nowIso){
     const overlayEl = $('annFullscreen');
     if(prayerActive){
       overlayEl.classList.remove('show');
       if(currentPlayerCleanup){ try{currentPlayerCleanup();}catch(e){} currentPlayerCleanup=null; }
-      $('annVideoBox').innerHTML='';
-      engine.showingUntil=0; engine.current=null; engine.videoEnded=false;
+      $('annVideoBox').innerHTML=''; $('annSheetBox').innerHTML=''; $('annSheetBox').style.display='none';
+      engine.showingUntil=0; engine.current=null; engine.videoEnded=false; engine.subQueue=[]; engine.pendingSheetFetch=false;
       return;
     }
+    if(engine.pendingSheetFetch) return; // a sheet fetch/render is in flight; wait for it to resolve
 
     if(engine.current && engine.videoEnded) engine.showingUntil = 0; // video reported it finished — end now
     if(engine.current && nowMs < engine.showingUntil) return; // still showing, wait
 
     if(engine.current && nowMs >= engine.showingUntil){
-      // just finished showing something — bookkeeping, then hide
+      if(engine.subQueue.length){
+        // more pages queued for this session — show the next one immediately, no gap
+        const nextSrc = engine.subQueue.shift();
+        const durSec = Number(engine.current.duration) || Number(bannersCfg.duration) || 8;
+        $('annFullscreenImg').src = nextSrc;
+        engine.showingUntil = nowMs + durSec*1000;
+        return;
+      }
+      // just finished showing everything — bookkeeping, then hide
       overlayEl.classList.remove('show');
       if(currentPlayerCleanup){ try{currentPlayerCleanup();}catch(e){} currentPlayerCleanup=null; }
       $('annVideoBox').innerHTML = ''; // stop any playing video
+      $('annSheetBox').innerHTML = ''; $('annSheetBox').style.display = 'none';
       const b = engine.current;
       if(b.mode === 'interval') b._nextDue = nowMs + Math.max(1,Number(b.intervalMinutes)||15)*60000;
       if(b.mode === 'scheduled') b._lastTriggerKey = nowHM + '#' + b._matchedTime;
@@ -733,6 +793,25 @@
       }
     }
 
+    if(candidate && candidate.kind === 'sheet'){
+      engine.pendingSheetFetch = true;
+      $('annFullscreenImg').style.display = 'none';
+      $('annVideoBox').style.display = 'none'; $('annVideoBox').innerHTML = '';
+      const sheetBox = $('annSheetBox');
+      sheetBox.style.display = 'block';
+      sheetBox.innerHTML = '<div class="sheet-row-view"><div class="sheet-row-line">Memuat data...</div></div>';
+      $('annFullscreenCaption').textContent = candidate.caption || '';
+      overlayEl.classList.add('show');
+      engine.current = candidate; engine.videoEnded = false; engine.subQueue = [];
+      engine.showingUntil = nowMs + 6000; // temporary floor while loading, extended below once real duration is known
+      showSheetCandidate(candidate).then((durSec)=>{
+        engine.pendingSheetFetch = false;
+        if(engine.current !== candidate) return; // interrupted meanwhile (e.g. prayer time) — abandon
+        engine.showingUntil = Date.now() + (durSec||15)*1000;
+      });
+      return;
+    }
+
     if(candidate){
       const isAutoVideo = candidate.kind==='video' && candidate.autoDuration !== false;
       const defaultDur = candidate.kind==='video' ? 300 : 8;
@@ -740,12 +819,20 @@
       const durSec = isAutoVideo ? SAFETY_CAP_SEC : (Number(candidate.duration) || Number(bannersCfg.duration) || defaultDur);
       const imgEl = $('annFullscreenImg'), videoBox = $('annVideoBox');
       engine.videoEnded = false;
+      engine.subQueue = [];
       if(candidate.kind === 'video'){
         imgEl.style.display = 'none'; videoBox.style.display = 'flex';
         embedVideo(videoBox, candidate, ()=>{ engine.videoEnded = true; });
       } else {
+        let imgSrc = candidate.image;
+        if(candidate.dailySetId){
+          const todayPages = resolveDailyImages(candidate.dailySetId, candidate.rangeStart, candidate.rangeEnd, candidate.pagesPerDay, nowIso);
+          if(!todayPages || !todayPages.length) return; // daily set not loaded from server yet — try again next tick
+          imgSrc = todayPages[0];
+          engine.subQueue = todayPages.slice(1); // remaining pages for today, shown back-to-back
+        }
         videoBox.style.display = 'none'; videoBox.innerHTML=''; imgEl.style.display = 'block';
-        imgEl.src = candidate.image;
+        imgEl.src = imgSrc;
       }
       $('annFullscreenCaption').textContent = candidate.caption || candidate.title || '';
       overlayEl.classList.add('show');
@@ -776,6 +863,10 @@
       el.className = 'banner-item';
       const thumb = b.kind === 'video'
         ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">🎬</div>`
+        : b.kind === 'sheet'
+        ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">📊</div>`
+        : b.dailySetId
+        ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">🗓️</div>`
         : `<img src="${b.image}">`;
       const muteToggle = b.kind === 'video'
         ? `<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap;"><input type="checkbox" class="bi-muted" data-idx="${idx}" ${b.muted!==false?'checked':''}> Bisu</label>`
@@ -788,6 +879,14 @@
           ${thumb}
           <div class="bi-body">
             ${b.kind==='video' ? `<div class="hint" style="margin:0;word-break:break-all;">${(b.url||'').slice(0,60)}</div>` : ''}
+            ${b.kind==='sheet' ? `<div class="hint" style="margin:0;word-break:break-all;">${b.sheetMode==='table'?'Tabel utuh':'Baris bergantian/hari'} — ${(b.sheetUrl||'').slice(0,50)}...</div>` : ''}
+            ${b.dailySetId ? `<div class="hint" style="margin:0;">Set harian — ${(dailySetsCache[b.dailySetId]||[]).length || '...'} halaman total</div>` : ''}
+            ${b.dailySetId ? `
+              <div class="bi-row">
+                <label style="font-size:12px;color:var(--muted);white-space:nowrap;">Halaman/hari <input type="number" class="bi-pagesperday" data-idx="${idx}" min="1" value="${b.pagesPerDay||1}" style="width:60px;display:inline-block;padding:5px 7px;"></label>
+                <label style="font-size:12px;color:var(--muted);white-space:nowrap;">Dari hlm <input type="number" class="bi-rangestart" data-idx="${idx}" min="1" value="${b.rangeStart||1}" style="width:65px;display:inline-block;padding:5px 7px;"></label>
+                <label style="font-size:12px;color:var(--muted);white-space:nowrap;">s/d hlm <input type="number" class="bi-rangeend" data-idx="${idx}" min="1" value="${b.rangeEnd||''}" placeholder="akhir" style="width:70px;display:inline-block;padding:5px 7px;"></label>
+              </div>` : ''}
             <input type="text" placeholder="Keterangan (opsional)" value="${(b.caption||'').replace(/"/g,'&quot;')}" data-idx="${idx}" class="bi-caption">
             ${b.kind==='video' ? `<div class="bi-row">${autoDurToggle}${muteToggle}</div>` : ''}
             <div class="bi-row">
@@ -809,6 +908,9 @@
 
     wrap.querySelectorAll('.bi-caption').forEach(inp=> inp.addEventListener('input', e=>{ tempBanners[+e.target.dataset.idx].caption = e.target.value; }));
     wrap.querySelectorAll('.bi-duration').forEach(inp=> inp.addEventListener('input', e=>{ tempBanners[+e.target.dataset.idx].duration = e.target.value; }));
+    wrap.querySelectorAll('.bi-pagesperday').forEach(inp=> inp.addEventListener('input', e=>{ tempBanners[+e.target.dataset.idx].pagesPerDay = e.target.value; }));
+    wrap.querySelectorAll('.bi-rangestart').forEach(inp=> inp.addEventListener('input', e=>{ tempBanners[+e.target.dataset.idx].rangeStart = e.target.value; }));
+    wrap.querySelectorAll('.bi-rangeend').forEach(inp=> inp.addEventListener('input', e=>{ tempBanners[+e.target.dataset.idx].rangeEnd = e.target.value; }));
     wrap.querySelectorAll('.bi-muted').forEach(inp=> inp.addEventListener('change', e=>{ tempBanners[+e.target.dataset.idx].muted = e.target.checked; }));
     wrap.querySelectorAll('.bi-autodur').forEach(inp=> inp.addEventListener('change', e=>{
       const idx = +e.target.dataset.idx;
@@ -870,17 +972,22 @@
     $('videoAddForm').style.display='none'; $('videoUrlInput').value=''; $('videoUrlHint').textContent='';
     renderBannerList();
   });
-  $('bannerFileInput').addEventListener('change', (e)=>{
+  $('bannerFileInput').addEventListener('change', async (e)=>{
     const files = Array.from(e.target.files || []);
-    let remaining = files.length; if(!remaining) return;
-    files.forEach(file=>{
-      const reader = new FileReader();
-      reader.onload = (ev)=>{
-        tempBanners.push({kind:'image', image: ev.target.result, caption:'', mode:'cycle', duration:'', intervalMinutes:15, times:'', days:[0,1,2,3,4,5,6]});
-        remaining--; if(remaining===0) renderBannerList();
-      };
-      reader.readAsDataURL(file);
-    });
+    if(!files.length) return;
+    const usingDrive = !!effectiveSyncUrl();
+    let statusEl = $('annStatus');
+    if(usingDrive){ statusEl.textContent = `Mengunggah ${files.length} gambar ke Google Drive...`; statusEl.className='status-msg'; }
+    let uploaded = 0;
+    for(const file of files){
+      let imageSrc = null;
+      if(usingDrive){ imageSrc = await uploadToDrive(file); }
+      if(!imageSrc){ imageSrc = await fileToBase64(file).then(b64 => `data:${file.type};base64,${b64}`); }
+      tempBanners.push({kind:'image', image: imageSrc, caption:'', mode:'cycle', duration:'', intervalMinutes:15, times:'', days:[0,1,2,3,4,5,6]});
+      uploaded++;
+    }
+    renderBannerList();
+    if(usingDrive){ statusEl.textContent = `${uploaded} gambar siap (diunggah ke Drive).`; statusEl.className='status-msg ok'; }
     e.target.value = '';
   });
 
@@ -1003,6 +1110,247 @@
     try{ await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)}); return true; }
     catch(e){ return false; }
   }
+  async function remoteCall(url, body){
+    if(!url) return null;
+    try{
+      const r = await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){ return null; }
+  }
+  function fileToBase64(file){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  // Uploads a file to Google Drive via the Apps Script backend (if a sync URL is configured)
+  // and returns its public URL. Returns null if not configured or the upload fails —
+  // callers should fall back to storing the file inline as base64 in that case.
+  async function uploadToDrive(file){
+    const url = effectiveSyncUrl();
+    if(!url) return null;
+    try{
+      const dataBase64 = await fileToBase64(file);
+      const result = await remoteCall(url, { action:'uploadImage', filename:file.name, mimeType:file.type, dataBase64 });
+      return (result && result.ok && result.url) ? result.url : null;
+    }catch(e){ return null; }
+  }
+  function blobToBase64(blob){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  async function uploadBlobToDrive(blob, filename, mimeType){
+    const url = effectiveSyncUrl();
+    if(!url) return null;
+    try{
+      const dataBase64 = await blobToBase64(blob);
+      const result = await remoteCall(url, { action:'uploadImage', filename, mimeType, dataBase64 });
+      return (result && result.ok && result.url) ? result.url : null;
+    }catch(e){ return null; }
+  }
+
+  // ---- "Set Harian dari PDF" — one page shown per calendar day, looping ----
+  let dailySetsCache = {}; // { setId: [imageUrl, ...] } refreshed by pollFullSync
+  let pdfJsLoaded = false;
+  async function ensurePdfJs(){
+    if(pdfJsLoaded) return true;
+    if(typeof pdfjsLib === 'undefined') return false;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfJsLoaded = true;
+    return true;
+  }
+  function dailyImageIndex(iso, count){
+    if(!count) return 0;
+    const days = Math.floor(new Date(iso+'T00:00:00Z').getTime() / 86400000);
+    return ((days % count) + count) % count;
+  }
+  // Resolves which page(s) from a daily image set should show "today", honoring
+  // an optional page range and how many pages to show per day (for the book /
+  // learning-material use case — defaults to 1 page/day, full range).
+  function resolveDailyImages(setId, rangeStart, rangeEnd, pagesPerDay, iso){
+    const full = dailySetsCache[setId];
+    if(!full || !full.length) return null;
+    const start = Math.max(1, Number(rangeStart)||1) - 1;
+    const end = rangeEnd ? Math.min(full.length, Number(rangeEnd)) : full.length;
+    const subset = full.slice(start, Math.max(start+1, end));
+    if(!subset.length) return null;
+    const perDay = Math.max(1, Number(pagesPerDay)||1);
+    const totalChunks = Math.ceil(subset.length / perDay);
+    const chunkIdx = dailyImageIndex(iso, totalChunks);
+    return subset.slice(chunkIdx*perDay, chunkIdx*perDay+perDay);
+  }
+
+  // ---- "Pengumuman dari Google Sheets" ----
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  async function fetchSheetData(sheetUrl, tabName){
+    const url = effectiveSyncUrl();
+    if(!url || !sheetUrl) return null;
+    const result = await remoteCall(url, { action:'readSheet', sheetUrl, tabName: tabName||'' });
+    return (result && result.ok) ? result.rows : { __error: (result && result.error) || 'Gagal membaca sheet.' };
+  }
+
+  // If content overflows its box, wraps it for a slow bottom-to-top scroll and
+  // returns a suggested display duration (seconds) long enough to read it all.
+  // Returns null when content already fits (caller keeps its own/default duration).
+  function measureAndApplyScroll(container){
+    const content = container.firstElementChild;
+    if(!content) return null;
+    const contentH = content.scrollHeight, boxH = container.clientHeight;
+    if(contentH <= boxH + 20) return null;
+    const dur = Math.max(8, Math.round(contentH/40)); // ~40px/detik, kecepatan baca nyaman
+    container.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sheet-scroll';
+    wrapper.appendChild(content);
+    container.appendChild(wrapper);
+    wrapper.style.animation = `sheetScrollUp ${dur}s linear`;
+    return dur;
+  }
+
+  function renderSheetRotate(container, rows, iso){
+    if(!rows || rows.__error){ container.innerHTML = `<div class="sheet-row-view"><div class="sheet-row-line">⚠️ ${escapeHtml((rows&&rows.__error)||'Data tidak ditemukan')}</div></div>`; return null; }
+    const header = rows[0]||[];
+    const dataRows = rows.slice(1).filter(r=> r.some(c=> c!==''&&c!==null&&c!==undefined));
+    if(!dataRows.length){ container.innerHTML = '<div class="sheet-row-view"><div class="sheet-row-line">Tidak ada data.</div></div>'; return null; }
+    const idx = dailyImageIndex(iso, dataRows.length);
+    const row = dataRows[idx];
+    const lines = header.map((h,i)=> `<div class="sheet-row-line"><b>${escapeHtml(h)}:</b> ${escapeHtml(row[i]!==undefined&&row[i]!==null?row[i]:'')}</div>`).join('');
+    container.innerHTML = `<div class="sheet-row-view">${lines}</div>`;
+    return measureAndApplyScroll(container);
+  }
+
+  function renderSheetTable(container, rows){
+    if(!rows || rows.__error){ container.innerHTML = `<div class="sheet-row-view"><div class="sheet-row-line">⚠️ ${escapeHtml((rows&&rows.__error)||'Data tidak ditemukan')}</div></div>`; return null; }
+    if(!rows.length){ container.innerHTML = '<div class="sheet-row-view"><div class="sheet-row-line">Tidak ada data.</div></div>'; return null; }
+    const header = rows[0]||[];
+    const body = rows.slice(1);
+    const thead = `<tr>${header.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
+    const tbody = body.map(r=>`<tr>${header.map((_,i)=>`<td>${escapeHtml(r[i]!==undefined&&r[i]!==null?r[i]:'')}</td>`).join('')}</tr>`).join('');
+    container.innerHTML = `<table class="sheet-table">${thead}${tbody}</table>`;
+    return measureAndApplyScroll(container);
+  }
+
+  async function showSheetCandidate(candidate){
+    const container = $('annSheetBox');
+    const now = wibNow();
+    const rows = await fetchSheetData(candidate.sheetUrl, candidate.tabName);
+    if(candidate.sheetMode === 'table') return renderSheetTable(container, rows) || Number(candidate.duration) || 20;
+    return renderSheetRotate(container, rows, now.iso) || Number(candidate.duration) || 15;
+  }
+
+  $('addSheetBtn').addEventListener('click', ()=>{
+    if(!effectiveSyncUrl()){
+      $('annStatus').textContent = 'Isi & simpan URL Sinkronisasi dulu (tab Adzan & Iqomah) sebelum memakai fitur ini.';
+      $('annStatus').className = 'status-msg err';
+      return;
+    }
+    $('sheetUrlInput').value=''; $('sheetTabInput').value=''; $('sheetAddStatus').textContent='';
+    $('sheetAddOverlay').classList.add('open');
+  });
+  $('closeSheetAdd').addEventListener('click', ()=> $('sheetAddOverlay').classList.remove('open'));
+  $('sheetAddOverlay').addEventListener('click', (e)=>{ if(e.target===$('sheetAddOverlay')) $('sheetAddOverlay').classList.remove('open'); });
+
+  $('testSheetBtn').addEventListener('click', async ()=>{
+    const sheetUrl = $('sheetUrlInput').value.trim();
+    const tabName = $('sheetTabInput').value.trim();
+    const statusEl = $('sheetAddStatus');
+    if(!sheetUrl){ statusEl.textContent='Isi link Google Sheets dulu.'; statusEl.className='status-msg err'; return; }
+    statusEl.textContent = 'Membaca sheet...'; statusEl.className='status-msg';
+    const rows = await fetchSheetData(sheetUrl, tabName);
+    if(!rows || rows.__error){ statusEl.textContent = '❌ ' + ((rows&&rows.__error)||'Gagal membaca sheet.'); statusEl.className='status-msg err'; return; }
+    statusEl.textContent = `✅ Berhasil — ditemukan ${rows.length} baris (termasuk header), ${(rows[0]||[]).length} kolom.`;
+    statusEl.className='status-msg ok';
+  });
+
+  $('confirmAddSheetBtn').addEventListener('click', ()=>{
+    const sheetUrl = $('sheetUrlInput').value.trim();
+    const tabName = $('sheetTabInput').value.trim();
+    const sheetMode = document.querySelector('input[name=sheetMode]:checked').value;
+    if(!sheetUrl){ $('sheetAddStatus').textContent='Isi link Google Sheets dulu.'; $('sheetAddStatus').className='status-msg err'; return; }
+    tempBanners.push({ kind:'sheet', sheetUrl, tabName, sheetMode, caption:'', mode:'cycle', duration:'', intervalMinutes:15, times:'', days:[0,1,2,3,4,5,6] });
+    renderBannerList();
+    $('sheetAddOverlay').classList.remove('open');
+  });
+
+  $('addPdfDailyBtn').addEventListener('click', ()=>{
+    if(!effectiveSyncUrl()){
+      $('annStatus').textContent = 'Isi & simpan URL Sinkronisasi dulu (tab Adzan & Iqomah) sebelum memakai fitur ini — halaman PDF perlu diunggah ke Google Drive.';
+      $('annStatus').className = 'status-msg err';
+      return;
+    }
+    $('pdfDailyFileInput').click();
+  });
+  $('closePdfDaily').addEventListener('click', ()=> $('pdfDailyOverlay').classList.remove('open'));
+
+  $('pdfDailyFileInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    const ready = await ensurePdfJs();
+    if(!ready){ $('annStatus').textContent = 'Gagal memuat pustaka pembaca PDF (cek koneksi internet).'; $('annStatus').className='status-msg err'; return; }
+
+    const overlay = $('pdfDailyOverlay'); overlay.classList.add('open');
+    const statusEl = $('pdfDailyStatus'), barEl = $('pdfDailyBar'), detailEl = $('pdfDailyDetail');
+    statusEl.textContent = 'Membaca file PDF...';
+    barEl.style.width = '2%';
+
+    try{
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      const total = pdf.numPages;
+      statusEl.textContent = `Mengubah & mengunggah halaman (0/${total})...`;
+      const urls = [];
+      let failed = 0;
+      for(let i=1;i<=total;i++){
+        detailEl.textContent = `Halaman ${i} dari ${total}${failed?` — ${failed} gagal (dilewati)`:''}`;
+        let uploadedUrl = null;
+        try{
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.3 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width; canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.75));
+          uploadedUrl = await uploadBlobToDrive(blob, `page-${String(i).padStart(4,'0')}.jpg`, 'image/jpeg');
+          if(!uploadedUrl) uploadedUrl = await uploadBlobToDrive(blob, `page-${String(i).padStart(4,'0')}.jpg`, 'image/jpeg'); // retry once
+        }catch(err){ uploadedUrl = null; }
+        if(uploadedUrl) urls.push(uploadedUrl); else failed++;
+        barEl.style.width = `${Math.round(i/total*100)}%`;
+        statusEl.textContent = `Mengubah & mengunggah halaman (${i}/${total})...`;
+      }
+
+      if(urls.length === 0){
+        statusEl.textContent = '❌ Gagal — tidak ada halaman yang berhasil diunggah.'; 
+        return;
+      }
+
+      statusEl.textContent = 'Menyimpan daftar gambar...';
+      const setId = 'daily-' + Date.now();
+      const url = effectiveSyncUrl();
+      await remoteCall(url, { action:'saveDailySet', setId, images: urls });
+      dailySetsCache[setId] = urls;
+
+      tempBanners.push({
+        kind:'image', dailySetId:setId, caption:'',
+        mode:'scheduled', duration:'', intervalMinutes:15, times:'', days:[0,1,2,3,4,5,6]
+      });
+      renderBannerList();
+
+      statusEl.textContent = `✅ Selesai! ${urls.length} halaman siap${failed?`, ${failed} gagal dilewati`:''}. Atur jadwal & durasi tampilnya di daftar banner, lalu klik Simpan.`;
+      detailEl.textContent = '';
+    }catch(err){
+      statusEl.textContent = '❌ Gagal memproses PDF: ' + err.message;
+    }
+  });
 
   $('savePaBtn').addEventListener('click', async ()=>{
     const prayers = {};
@@ -1075,6 +1423,7 @@
     if(!remote) return;
 
     if(remote.reports) remoteReportsCache = remote.reports;
+    if(remote.dailySets) dailySetsCache = remote.dailySets;
 
     if(remote.schedule && JSON.stringify(remote.schedule)!==JSON.stringify(schedule)){
       schedule = remote.schedule;
@@ -1350,7 +1699,7 @@
     renderPaOverlay(paState, now.iso);
     const nowMs = Date.now();
     const nowHM = `${String(now.h).padStart(2,'0')}:${String(now.m).padStart(2,'0')}`;
-    bannerTick(nowMs, nowHM, now.day);
+    bannerTick(nowMs, nowHM, now.day, now.iso);
   }
 
   // ---------------- Settings modal open/close/tabs ----------------
