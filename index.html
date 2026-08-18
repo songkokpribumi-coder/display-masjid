@@ -274,11 +274,13 @@
         <button class="btn" id="addBannerBtn">+ Tambah Banner Gambar</button>
         <button class="btn" id="addVideoBtn">+ Tambah Video (Link)</button>
         <button class="btn" id="addPdfDailyBtn">+ Set Harian dari PDF 🗓️</button>
+        <button class="btn" id="addPdfViewerBtn">+ Penampil PDF 📖</button>
         <button class="btn" id="addSheetBtn">+ Dari Google Sheets 📊</button>
         <input type="file" id="bannerFileInput" accept="image/*" multiple style="display:none;">
         <input type="file" id="pdfDailyFileInput" accept="application/pdf" style="display:none;">
+        <input type="file" id="pdfViewerFileInput" accept="application/pdf" style="display:none;">
       </div>
-      <p class="hint" style="margin-top:4px;">"Set Harian dari PDF" = tiap halaman PDF jadi 1 gambar, tampil satu per hari bergantian lalu ulang dari awal. Cocok untuk kosakata harian atau materi buku per halaman. <strong>Wajib isi URL Sinkronisasi dulu</strong> (tab Adzan &amp; Iqomah) karena halamannya diunggah ke Google Drive.</p>
+      <p class="hint" style="margin-top:4px;">"Set Harian dari PDF" = tiap halaman diubah jadi gambar & diunggah satu-satu — lebih lambat di awal, tapi paling andal untuk PDF besar/berat gambar. "Penampil PDF" = file PDF diunggah utuh sekali, halamannya dirender langsung saat tampil — jauh lebih cepat diproses, tapi disarankan untuk file di bawah ±20MB (buku/teks biasa). <strong>Keduanya wajib isi URL Sinkronisasi dulu</strong> (tab Adzan &amp; Iqomah).</p>
       <div class="overlay" id="pdfDailyOverlay">
         <div class="modal" style="max-width:440px;">
           <button class="close-x" id="closePdfDaily">&times;</button>
@@ -288,6 +290,43 @@
             <div id="pdfDailyBar" style="background:var(--brass); height:100%; width:0%; transition:width .2s;"></div>
           </div>
           <p class="hint" id="pdfDailyDetail" style="margin-top:8px;"></p>
+        </div>
+      </div>
+      <div class="overlay" id="pdfViewerOverlay">
+        <div class="modal" style="max-width:480px;">
+          <button class="close-x" id="closePdfViewer">&times;</button>
+          <h2>Penampil PDF Harian</h2>
+          <p class="sub" id="pdfViewerIntro">Pilih file PDF — 1 halaman tampil per hari, terjadwal, lalu ulang dari awal setelah rentang halaman habis.</p>
+          <div id="pdfViewerUploadStep">
+            <button class="btn primary" id="pdfViewerPickBtn">Pilih File PDF...</button>
+            <p class="hint" id="pdfViewerUploadStatus" style="margin-top:8px;"></p>
+          </div>
+          <div id="pdfViewerConfigStep" style="display:none;">
+            <p class="hint" id="pdfViewerFileInfo" style="margin:6px 0 12px;"></p>
+            <div class="two-col">
+              <div>
+                <span class="field-label" style="margin-top:0;">Mulai dari halaman</span>
+                <input type="number" id="pdfViewerStartPage" min="1" value="1">
+              </div>
+              <div>
+                <span class="field-label" style="margin-top:0;">Sampai halaman</span>
+                <input type="number" id="pdfViewerEndPage" min="1" placeholder="halaman terakhir">
+              </div>
+            </div>
+            <span class="field-label">Durasi tampil (detik)</span>
+            <input type="number" id="pdfViewerDuration" min="3" value="20" style="max-width:140px;">
+            <span class="field-label">Jam tampil (bisa lebih dari satu)</span>
+            <div id="pdfViewerTimesList"></div>
+            <div class="row-actions" style="margin-top:8px;">
+              <button class="btn small" id="pdfViewerAddTimeBtn">+ Tambah Jadwal</button>
+            </div>
+            <span class="field-label" style="margin-top:16px;">Hari tampil</span>
+            <div class="day-toggles" id="pdfViewerDays"></div>
+            <div class="row-actions" style="margin-top:16px;">
+              <button class="btn primary" id="pdfViewerConfirmBtn">Tambahkan</button>
+            </div>
+          </div>
+          <div id="pdfViewerStatus" class="status-msg"></div>
         </div>
       </div>
       <div class="overlay" id="sheetAddOverlay">
@@ -812,6 +851,33 @@
       return;
     }
 
+    if(candidate && candidate.kind === 'pdfbook'){
+      engine.pendingSheetFetch = true;
+      $('annVideoBox').style.display = 'none'; $('annVideoBox').innerHTML = '';
+      $('annSheetBox').style.display = 'none'; $('annSheetBox').innerHTML = '';
+      const imgEl = $('annFullscreenImg');
+      imgEl.style.display = 'block'; imgEl.src = '';
+      $('annFullscreenCaption').textContent = candidate.caption || candidate.pdfFilename || '';
+      overlayEl.classList.add('show');
+      engine.current = candidate; engine.videoEnded = false; engine.subQueue = [];
+      const durSec = Number(candidate.duration) || 20;
+      engine.showingUntil = nowMs + Math.max(durSec, 10)*1000; // floor while loading; corrected below if load fails
+      (async ()=>{
+        const doc = await loadPdfBookDoc(candidate.pdfFileId);
+        if(engine.current !== candidate) return; // interrupted meanwhile — abandon
+        engine.pendingSheetFetch = false;
+        if(!doc){ engine.showingUntil = Date.now(); return; } // couldn't load — hide on next tick, will retry later
+        const pageNum = resolvePdfBookPage(candidate, nowIso);
+        try{
+          const dataUrl = await renderPdfBookPage(doc, pageNum);
+          if(engine.current !== candidate) return;
+          imgEl.src = dataUrl;
+          engine.showingUntil = Date.now() + durSec*1000;
+        }catch(e){ engine.showingUntil = Date.now(); }
+      })();
+      return;
+    }
+
     if(candidate){
       const isAutoVideo = candidate.kind==='video' && candidate.autoDuration !== false;
       const defaultDur = candidate.kind==='video' ? 300 : 8;
@@ -865,6 +931,8 @@
         ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">🎬</div>`
         : b.kind === 'sheet'
         ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">📊</div>`
+        : b.kind === 'pdfbook'
+        ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">📖</div>`
         : b.dailySetId
         ? `<div style="width:90px;height:56px;border-radius:6px;flex-shrink:0;border:1px solid var(--line);background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:22px;">🗓️</div>`
         : `<img src="${b.image}">`;
@@ -880,6 +948,7 @@
           <div class="bi-body">
             ${b.kind==='video' ? `<div class="hint" style="margin:0;word-break:break-all;">${(b.url||'').slice(0,60)}</div>` : ''}
             ${b.kind==='sheet' ? `<div class="hint" style="margin:0;word-break:break-all;">${b.sheetMode==='table'?'Tabel utuh':'Baris bergantian/hari'} — ${(b.sheetUrl||'').slice(0,50)}...</div>` : ''}
+            ${b.kind==='pdfbook' ? `<div class="hint" style="margin:0;">${(b.pdfFilename||'PDF').slice(0,40)} — halaman ${b.startPage}-${b.endPage}, 1 hlm/hari</div>` : ''}
             ${b.dailySetId ? `<div class="hint" style="margin:0;">Set harian — ${(dailySetsCache[b.dailySetId]||[]).length || '...'} halaman total</div>` : ''}
             ${b.dailySetId ? `
               <div class="bi-row">
@@ -1278,6 +1347,144 @@
     tempBanners.push({ kind:'sheet', sheetUrl, tabName, sheetMode, caption:'', mode:'cycle', duration:'', intervalMinutes:15, times:'', days:[0,1,2,3,4,5,6] });
     renderBannerList();
     $('sheetAddOverlay').classList.remove('open');
+  });
+
+  // ---- "Penampil PDF" — upload PDF once, render the needed page on the fly each day ----
+  let pdfBookCache = {}; // { fileId: PDFDocumentProxy } — parsed once, reused for every render
+  let pdfViewerUpload = null; // { fileId, url, filename, pageCount }
+
+  async function loadPdfBookDoc(fileId){
+    if(pdfBookCache[fileId]) return pdfBookCache[fileId];
+    const ready = await ensurePdfJs();
+    if(!ready) return null;
+    const url = effectiveSyncUrl();
+    if(!url) return null;
+    const result = await remoteCall(url, { action:'getFile', fileId });
+    if(!result || !result.ok) return null;
+    try{
+      const bytes = Uint8Array.from(atob(result.dataBase64), c=>c.charCodeAt(0));
+      const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+      pdfBookCache[fileId] = doc;
+      return doc;
+    }catch(e){ return null; }
+  }
+
+  function resolvePdfBookPage(item, iso){
+    const start = Math.max(1, Number(item.startPage)||1);
+    const end = Math.max(start, Number(item.endPage)||start);
+    const count = end - start + 1;
+    return start + dailyImageIndex(iso, count);
+  }
+
+  async function renderPdfBookPage(doc, pageNum){
+    const page = await doc.getPage(Math.min(pageNum, doc.numPages));
+    const viewport = page.getViewport({ scale: 1.6 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return canvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  function pdfViewerTimeRow(value){
+    const row = document.createElement('div');
+    row.className = 'row-actions'; row.style.marginTop = '6px';
+    row.innerHTML = `<input type="time" class="pdf-time-input" value="${value||''}" style="flex:1;"><button class="btn small danger pdf-time-remove" type="button">Hapus</button>`;
+    row.querySelector('.pdf-time-remove').addEventListener('click', ()=>{
+      if($('pdfViewerTimesList').children.length > 1) row.remove();
+    });
+    return row;
+  }
+  $('pdfViewerAddTimeBtn').addEventListener('click', ()=> $('pdfViewerTimesList').appendChild(pdfViewerTimeRow('')));
+
+  function resetPdfViewerModal(){
+    $('pdfViewerUploadStep').style.display = '';
+    $('pdfViewerConfigStep').style.display = 'none';
+    $('pdfViewerUploadStatus').textContent = '';
+    $('pdfViewerStatus').textContent = '';
+    $('pdfViewerTimesList').innerHTML = '';
+    $('pdfViewerTimesList').appendChild(pdfViewerTimeRow('08:00'));
+    const dayBox = $('pdfViewerDays'); dayBox.innerHTML = '';
+    DAY_LABELS.forEach((lbl,d)=>{
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='day-btn active'; btn.textContent=lbl; btn.dataset.day=d;
+      btn.addEventListener('click', ()=> btn.classList.toggle('active'));
+      dayBox.appendChild(btn);
+    });
+    pdfViewerUpload = null;
+  }
+
+  $('addPdfViewerBtn').addEventListener('click', ()=>{
+    if(!effectiveSyncUrl()){
+      $('annStatus').textContent = 'Isi & simpan URL Sinkronisasi dulu (tab Adzan & Iqomah) sebelum memakai fitur ini.';
+      $('annStatus').className = 'status-msg err';
+      return;
+    }
+    resetPdfViewerModal();
+    $('pdfViewerOverlay').classList.add('open');
+  });
+  $('closePdfViewer').addEventListener('click', ()=> $('pdfViewerOverlay').classList.remove('open'));
+  $('pdfViewerOverlay').addEventListener('click', (e)=>{ if(e.target===$('pdfViewerOverlay')) $('pdfViewerOverlay').classList.remove('open'); });
+  $('pdfViewerPickBtn').addEventListener('click', ()=> $('pdfViewerFileInput').click());
+
+  $('pdfViewerFileInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = '';
+    if(!file) return;
+    const statusEl = $('pdfViewerUploadStatus');
+    const sizeMb = file.size/(1024*1024);
+    if(sizeMb > 25){
+      statusEl.textContent = `⚠️ File ini ${sizeMb.toFixed(1)}MB — kemungkinan besar terlalu besar untuk cara ini. Disarankan pakai "Set Harian dari PDF" untuk file sebesar ini.`;
+      statusEl.className = 'status-msg err';
+      return;
+    }
+    statusEl.textContent = `Mengunggah "${file.name}" (${sizeMb.toFixed(1)}MB)...`;
+    statusEl.className = 'status-msg';
+    const url = effectiveSyncUrl();
+    let uploadResult;
+    try{
+      const dataBase64 = await fileToBase64(file);
+      uploadResult = await remoteCall(url, { action:'uploadFile', filename:file.name, mimeType:'application/pdf', dataBase64 });
+    }catch(err){ uploadResult = null; }
+    if(!uploadResult || !uploadResult.ok){
+      statusEl.textContent = '❌ Gagal mengunggah. Cek koneksi & URL Sinkronisasi.';
+      statusEl.className = 'status-msg err';
+      return;
+    }
+    statusEl.textContent = 'Membaca jumlah halaman...';
+    const ready = await ensurePdfJs();
+    let pageCount = null;
+    if(ready){
+      try{
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+        pageCount = doc.numPages;
+        pdfBookCache[uploadResult.fileId] = doc; // cache immediately, avoids re-fetching right after upload
+      }catch(err){ pageCount = null; }
+    }
+    pdfViewerUpload = { fileId: uploadResult.fileId, url: uploadResult.url, filename: file.name, pageCount };
+    $('pdfViewerFileInfo').textContent = pageCount ? `✅ "${file.name}" — ${pageCount} halaman terdeteksi.` : `✅ "${file.name}" terunggah (jumlah halaman tak terbaca, isi manual di bawah).`;
+    $('pdfViewerEndPage').value = pageCount || '';
+    $('pdfViewerEndPage').placeholder = pageCount ? String(pageCount) : 'halaman terakhir';
+    statusEl.textContent = '';
+    $('pdfViewerUploadStep').style.display = 'none';
+    $('pdfViewerConfigStep').style.display = 'block';
+  });
+
+  $('pdfViewerConfirmBtn').addEventListener('click', ()=>{
+    if(!pdfViewerUpload){ $('pdfViewerStatus').textContent='Unggah PDF dulu.'; $('pdfViewerStatus').className='status-msg err'; return; }
+    const times = Array.from(document.querySelectorAll('.pdf-time-input')).map(i=>i.value).filter(Boolean);
+    if(!times.length){ $('pdfViewerStatus').textContent='Isi minimal 1 jam tampil.'; $('pdfViewerStatus').className='status-msg err'; return; }
+    const days = Array.from(document.querySelectorAll('#pdfViewerDays .day-btn.active')).map(b=>+b.dataset.day);
+    const startPage = Math.max(1, Number($('pdfViewerStartPage').value)||1);
+    const endPage = Math.max(startPage, Number($('pdfViewerEndPage').value)|| (pdfViewerUpload.pageCount||startPage));
+    tempBanners.push({
+      kind:'pdfbook', pdfFileId: pdfViewerUpload.fileId, pdfUrl: pdfViewerUpload.url, pdfFilename: pdfViewerUpload.filename,
+      startPage, endPage, caption:'', mode:'scheduled', duration: $('pdfViewerDuration').value || 20,
+      times: times.join(','), days: days.length?days:[0,1,2,3,4,5,6], intervalMinutes:15
+    });
+    renderBannerList();
+    $('pdfViewerOverlay').classList.remove('open');
   });
 
   $('addPdfDailyBtn').addEventListener('click', ()=>{

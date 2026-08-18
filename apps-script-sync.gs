@@ -196,6 +196,25 @@ function handleReadSheet_(body) {
   }
 }
 
+// Retrieves a previously-uploaded file's raw bytes (used by the "Penampil PDF"
+// feature to fetch a whole PDF once, cache it in the browser, and render
+// whichever page is needed each day — avoids CORS issues with fetching
+// Drive links directly, and avoids re-uploading the file page-by-page.
+function handleGetFile_(body) {
+  try {
+    var file = DriveApp.getFileById(body.fileId);
+    var blob = file.getBlob();
+    var sizeMb = blob.getBytes().length / (1024*1024);
+    if (sizeMb > 25) {
+      return { ok: false, error: 'File berukuran ' + sizeMb.toFixed(1) + 'MB, terlalu besar untuk cara ini. Pakai fitur "Set Harian dari PDF" (konversi ke gambar) untuk file sebesar ini.' };
+    }
+    var base64 = Utilities.base64Encode(blob.getBytes());
+    return { ok: true, dataBase64: base64, mimeType: blob.getContentType() };
+  } catch (err) {
+    return { ok: false, error: 'Gagal mengambil file: ' + err.message };
+  }
+}
+
 // ---------------------------------------------------------------------
 // Web App entry points
 // ---------------------------------------------------------------------
@@ -217,6 +236,10 @@ function doPost(e) {
   if (body.action === 'readSheet') {
     var sheetResult = handleReadSheet_(body);
     return ContentService.createTextOutput(JSON.stringify(sheetResult)).setMimeType(ContentService.MimeType.JSON);
+  }
+  if (body.action === 'getFile') {
+    var fileResult = handleGetFile_(body);
+    return ContentService.createTextOutput(JSON.stringify(fileResult)).setMimeType(ContentService.MimeType.JSON);
   }
 
   var lock = LockService.getScriptLock();
